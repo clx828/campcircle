@@ -55,6 +55,7 @@ create table if not exists post
     isDelete   tinyint  default 0                 not null comment '是否删除',
     index idx_userId (userId)
 ) comment '帖子' collate = utf8mb4_unicode_ci;
+ALTER TABLE post ADD COLUMN picture_list VARCHAR(255) DEFAULT '[]' COMMENT '图片ID列表';
 
 -- 帖子点赞表（硬删除）
 create table if not exists post_thumb
@@ -81,16 +82,16 @@ create table if not exists post_favour
 ) comment '帖子收藏';
 
 -- 图片表
-create table if not exists post_image
-(
-    id         bigint auto_increment comment 'id' primary key,
-    postId     bigint                             not null comment '帖子 id',
-    url        varchar(1024)                      not null comment '图片地址',
-    createTime datetime default CURRENT_TIMESTAMP not null comment '创建时间',
-    updateTime datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
-    isDelete   tinyint  default 0                 not null comment '是否删除',
-    index idx_postId (postId)
-) comment '图片' collate = utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS picture (
+   id          BIGINT AUTO_INCREMENT COMMENT 'id' PRIMARY KEY,
+   pictureUrl  VARCHAR(512)                       NOT NULL COMMENT '图片链接',
+   userId  BIGINT                             NOT NULL COMMENT '上传用户ID',
+   createTime  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '创建时间',
+   updateTime  DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+   isDelete    TINYINT  DEFAULT 0                  NOT NULL COMMENT '是否删除',
+-- 创建索引
+   INDEX idx_uploaderId (userId)
+) COMMENT '图片' COLLATE = utf8mb4_unicode_ci;
 
 -- 消息表
 create table if not exists message

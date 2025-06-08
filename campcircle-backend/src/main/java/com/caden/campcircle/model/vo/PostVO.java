@@ -1,6 +1,7 @@
 package com.caden.campcircle.model.vo;
 
 import cn.hutool.json.JSONUtil;
+import com.caden.campcircle.model.entity.Picture;
 import com.caden.campcircle.model.entity.Post;
 import java.io.Serializable;
 import java.util.Date;
@@ -30,6 +31,11 @@ public class PostVO implements Serializable {
      * 内容
      */
     private String content;
+
+    /**
+     * 图片列表
+     */
+    private List<Picture> pictureList;
 
     /**
      * 点赞数

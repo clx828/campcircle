@@ -2,11 +2,11 @@
   <view class="release-container">
     <!-- 顶部栏 -->
     <view class="header-xhs" :style="headerStyle">
-     <wd-navbar title="发笔记" left-text="返回" right-text="发布" left-arrow>
-       <template #capsule>
-         <wd-navbar-capsule @back="handleBack" @back-home="handleBackHome" />
-       </template>
-     </wd-navbar>
+      <wd-navbar title="发笔记" left-text="返回" right-text="发布" left-arrow>
+        <template #capsule>
+          <wd-navbar-capsule @back="handleBack" @back-home="handleBackHome" />
+        </template>
+      </wd-navbar>
     </view>
     <!-- 内容输入区 -->
     <view class="note-area-xhs">
@@ -32,6 +32,7 @@ import { ref, computed, onMounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/userStore'
 import RouterGuard from '@/utils/routerGuard'
+import { postApi } from '@/api/post'
 
 const noteContent = ref('')
 const inputFocus = ref(false)
@@ -60,7 +61,7 @@ const headerStyle = computed(() => {
 function getSystemInfo() {
   const systemInfo = uni.getSystemInfoSync()
   statusBarHeight.value = systemInfo.statusBarHeight || 0
-  
+
   // #ifdef MP-WEIXIN
   const menuButtonInfo = uni.getMenuButtonBoundingClientRect()
   if (menuButtonInfo) {
@@ -88,8 +89,17 @@ function chooseImage() {
   uni.chooseImage({
     count: 9 - images.value.length,
     sizeType: ['compressed'],
-    success: (res) => {
-      images.value = images.value.concat(res.tempFilePaths).slice(0, 9)
+    success: async (res) => {
+      // 上传所有新选图片
+      const uploadPromises = res.tempFilePaths.map(filePath => postApi.uploadPicture(filePath))
+      try {
+        const results = await Promise.all(uploadPromises)
+        // 使用后端返回的pictureUrl字段做回显
+        const urls = results.map(r => r.data.pictureUrl)
+        images.value = images.value.concat(urls).slice(0, 9)
+      } catch (e) {
+        uni.showToast({ title: '图片上传失败', icon: 'none' })
+      }
     }
   })
 }
@@ -161,7 +171,7 @@ onShow(() => {
   left: 0;
   right: 0;
   z-index: 999;
-  
+
   // 确保 wd-navbar 内容垂直居中对齐胶囊
   :deep(.wd-navbar) {
     height: 100%;

@@ -67,7 +67,7 @@ wx:
   mp:
     token: xxx
     aesKey: xxx
-    appId: wx62fd590eb4cea404
+    appId:
     secret: 998642e5d1d9dcea03a486ec486b07c7
     config-storage:
       http-client-type: HttpClient
@@ -85,13 +85,14 @@ wx:
     appId: wx62fd590eb4cea404
     appSecret: 998642e5d1d9dcea03a486ec486b07c7
 # 对象存储
-# todo 需替换配置
+#cos对象存储配置
 cos:
   client:
-    accessKey: xxx
-    secretKey: xxx
-    region: xxx
-    bucket: xxx
+    host: https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com
+    SecretId: AKIDgCYfbJadT7YljV3MRJxNYUSO8OVTQCvY
+    SecretKey: WnqfLo24PWO3TffRyINDpDNJ0TiiU1KP
+    region: ap-guangzhou
+    bucket: yun-picture-1253809168
 # 接口文档配置
 knife4j:
   enable: true

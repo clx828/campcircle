@@ -32,7 +32,7 @@ class Request {
             config.header = {
                 ...config.header,
                 'Authorization': userStore.token
-				// `Bearer ${userStore.token}`
+                // `Bearer ${userStore.token}`
             }
         }
 
@@ -56,7 +56,7 @@ class Request {
             // 业务状态码处理
             switch (res.code) {
                 case 0:
-					console.log("请求成功了")
+                    console.log("请求成功了")
                     resolve(res)
                     break
                 case 40001: // 未授权或token过期
@@ -86,7 +86,7 @@ class Request {
             })
             reject(new Error(`HTTP错误：${response.statusCode}`))
         }
-    } 
+    }
 
     // 请求方法
     request<T = any>(config: RequestConfig): Promise<T> {
@@ -146,6 +146,40 @@ class Request {
             method: 'DELETE',
             data,
             ...config
+        })
+    }
+
+    // 新增：文件上传方法
+    uploadFile<T = any>(url: string, filePath: string, name = 'file', formData: Record<string, any> = {}, config: Partial<RequestConfig> = {}): Promise<T> {
+        const userStore = useUserStore()
+        return new Promise<T>((resolve, reject) => {
+            uni.uploadFile({
+                url: this.baseURL + url,
+                filePath,
+                name,
+                formData,
+                header: {
+                    ...(userStore.token ? { 'Authorization': userStore.token } : {}),
+                    ...(config.header || {})
+                },
+                success: (res) => {
+                    try {
+                        const data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data
+                        if (data.code === 0) {
+                            resolve(data)
+                        } else {
+                            uni.showToast({ title: data.message || '上传失败', icon: 'none' })
+                            reject(data)
+                        }
+                    } catch (e) {
+                        reject(e)
+                    }
+                },
+                fail: (err) => {
+                    uni.showToast({ title: '图片上传失败', icon: 'none' })
+                    reject(err)
+                }
+            })
         })
     }
 }

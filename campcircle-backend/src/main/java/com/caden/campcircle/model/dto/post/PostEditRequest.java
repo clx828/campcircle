@@ -32,5 +32,10 @@ public class PostEditRequest implements Serializable {
      */
     private List<String> tags;
 
+    /**
+     * 图片列表
+     */
+    private List<String> picture_list;
+
     private static final long serialVersionUID = 1L;
 }
