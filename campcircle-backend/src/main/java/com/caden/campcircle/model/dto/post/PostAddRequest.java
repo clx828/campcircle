@@ -13,11 +13,6 @@ import lombok.Data;
 public class PostAddRequest implements Serializable {
 
     /**
-     * 标题
-     */
-    private String title;
-
-    /**
      * 内容
      */
     private String content;
@@ -30,7 +25,7 @@ public class PostAddRequest implements Serializable {
     /**
      * 图片列表
      */
-    private List<String> picture_list;
+    private List<String> pictureList;
 
     private static final long serialVersionUID = 1L;
 }

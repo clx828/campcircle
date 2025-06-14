@@ -25,11 +25,6 @@ public class Post implements Serializable {
     private Long id;
 
     /**
-     * 标题
-     */
-    private String title;
-
-    /**
      * 内容
      */
     private String content;
@@ -40,6 +35,11 @@ public class Post implements Serializable {
     private String tags;
 
     /**
+     * 图片列表
+     */
+    private String pictureList;
+
+    /**
      * 点赞数
      */
     private Integer thumbNum;
@@ -48,6 +48,14 @@ public class Post implements Serializable {
      * 收藏数
      */
     private Integer favourNum;
+    /**
+     * 评论数
+     */
+    private Integer commentNum;
+    /**
+     * 浏览数
+     */
+    private Integer viewNum;
 
     /**
      * 创建用户 id

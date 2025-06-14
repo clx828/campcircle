@@ -63,8 +63,12 @@ public class PostController {
         Post post = new Post();
         BeanUtils.copyProperties(postAddRequest, post);
         List<String> tags = postAddRequest.getTags();
+        List<String> pictureList = postAddRequest.getPictureList();
         if (tags != null) {
             post.setTags(JSONUtil.toJsonStr(tags));
+        }
+        if( pictureList != null){
+            post.setPictureList(JSONUtil.toJsonStr(pictureList));
         }
         postService.validPost(post, true);
         User loginUser = userService.getLoginUser(request);

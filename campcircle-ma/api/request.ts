@@ -1,7 +1,7 @@
 import { useUserStore } from '@/stores/userStore'
 
 // API 基础URL
-const BASE_URL = 'http://localhost:8101/api'  // 这里替换为你的实际API地址
+const BASE_URL = 'http://192.168.3.60:8101/api'  // 这里替换为你的实际API地址
 
 // 请求配置接口
 interface RequestConfig extends UniApp.RequestOptions {
@@ -59,7 +59,7 @@ class Request {
                     console.log("请求成功了")
                     resolve(res)
                     break
-                case 40001: // 未授权或token过期
+                case 40100: // 未授权或token过期
                     userStore.clearUserInfo() // 清除用户信息
                     uni.showToast({
                         title: '请重新登录',

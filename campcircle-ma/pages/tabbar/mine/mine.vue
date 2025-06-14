@@ -4,7 +4,8 @@
     <image :src="userInfo.userAvatar" class="fixed-avatar"></image>
   </view>
 
-  <scroll-view class="profile-page" scroll-y="true" @scroll="onScrollThrottled">
+  <scroll-view class="profile-page" scroll-y="true" @scroll="onScrollThrottled" refresher-enabled="true"
+    :refresher-triggered="refresherTriggered" @refresherrefresh="onRefresh" refresher-background="#ffffff">
     <!-- 用户信息区域 -->
     <view class="user-header">
       <view class="user-header__overlay">
@@ -71,7 +72,7 @@
           </wd-tab>
         </wd-tabs>
       </view>
-      <view class="tab-content">
+      <view class="tab-content" :class="{ 'tab-content--empty': cardList.length === 0 }">
         <SocialCard v-for="(item, i) in cardList" :key="i" :avatar="item.avatar" :nickname="item.nickname"
           :time="item.time" :content="item.content" :images="item.images" />
         <EmptyState text="暂无内容" v-if="cardList.length === 0" />
@@ -91,44 +92,70 @@ import SocialCard from '@/components/SocialCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
 
 const cardList = [
-  // {
-  //   avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-  //   nickname: '小明',
-  //   time: '1分钟前',
-  //   content: '今天的天气真不错，适合出去玩！',
-  //   images: ['https://picsum.photos/400/300']
-  // },
-  // {
-  //   avatar: 'https://randomuser.me/api/portraits/women/45.jpg',
-  //   nickname: '小红',
-  //   time: '5分钟前',
-  //   content: '分享一下我的美食照片！',
-  //   images: ['https://picsum.photos/300/300', 'https://picsum.photos/301/301']
-  // },
-  // {
-  //   avatar: 'https://randomuser.me/api/portraits/men/12.jpg',
-  //   nickname: '老王',
-  //   time: '10分钟前',
-  //   content: '三张图片测试，看看排版效果如何。',
-  //   images: [
-  //     'https://picsum.photos/200/200',
-  //     'https://picsum.photos/201/201',
-  //     'https://picsum.photos/202/202'
-  //   ]
-  // },
-  // {
-  //   avatar: 'https://randomuser.me/api/portraits/women/22.jpg',
-  //   nickname: '小美',
-  //   time: '20分钟前',
-  //   content: '多图测试，最多一排三个。',
-  //   images: [
-  //     'https://picsum.photos/210/210',
-  //     'https://picsum.photos/211/211',
-  //     'https://picsum.photos/212/212',
-  //     'https://picsum.photos/213/213'
-  //   ]
-  // }
+  {
+    avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
+    nickname: '小明',
+    time: '1分钟前',
+    content: '今天的天气真不错，适合出去玩！',
+    images: ['https://picsum.photos/400/300']
+  },
+  {
+    avatar: 'https://randomuser.me/api/portraits/women/45.jpg',
+    nickname: '小红',
+    time: '5分钟前',
+    content: '分享一下我的美食照片！',
+    images: ['https://picsum.photos/300/300', 'https://picsum.photos/301/301']
+  },
+  {
+    avatar: 'https://randomuser.me/api/portraits/men/12.jpg',
+    nickname: '老王',
+    time: '10分钟前',
+    content: '三张图片测试，看看排版效果如何。',
+    images: [
+      'https://picsum.photos/200/200',
+      'https://picsum.photos/201/201',
+      'https://picsum.photos/202/202'
+    ]
+  },
+  {
+    avatar: 'https://randomuser.me/api/portraits/women/22.jpg',
+    nickname: '小美',
+    time: '20分钟前',
+    content: '多图测试，最多一排三个。',
+    images: [
+      'https://picsum.photos/210/210',
+      'https://picsum.photos/211/211',
+      'https://picsum.photos/212/212',
+      'https://picsum.photos/213/213'
+    ]
+  }
 ]
+
+// ===== 下拉刷新相关 =====
+const refresherTriggered = ref(false)
+
+const onRefresh = async () => {
+  refresherTriggered.value = true
+
+  try {
+    // 模拟刷新数据的异步操作
+    await new Promise(resolve => setTimeout(resolve, 1500))
+
+    // 这里可以添加实际的数据刷新逻辑
+    // 例如重新获取用户信息、重新加载内容列表等
+    console.log('刷新数据...')
+
+    // 可以在这里调用实际的API
+    // await fetchUserInfo()
+    // await fetchContentList()
+
+  } catch (error) {
+    console.error('刷新失败:', error)
+  } finally {
+    refresherTriggered.value = false
+  }
+}
+
 // ===== 滚动监听相关 =====
 const isAtTop = ref(true) // 是否在顶部
 
@@ -324,7 +351,6 @@ userInfo = {
 
 // ===== 内容区域 =====
 .content-section {
-  // background-color: #fafafa;
   border-top-left-radius: 15px;
   border-top-right-radius: 15px;
   padding-top: 8px;
@@ -333,7 +359,7 @@ userInfo = {
   margin-top: -3vh;
   position: relative;
   z-index: 2;
-  min-height: 60vh;
+  min-height: 63vh; // 精确计算：60vh + 3vh(margin-top补偿)
 }
 
 .content-tabs {
@@ -341,7 +367,7 @@ userInfo = {
   top: 10vh;
   z-index: 10;
   margin-top: 5px;
-  // background-color: #fafafa;
+  background: #fff; // 确保tabs背景是白色
   border-top-left-radius: 15px;
   border-top-right-radius: 15px;
 }
@@ -354,6 +380,17 @@ userInfo = {
 .tab-content {
   padding: 15px;
   background-color: #fafafa;
+  // 精确计算剩余空间高度：63vh - padding-top - tabs高度
+  min-height: calc(63vh - 8px - 42px);
+
+  &--empty {
+    // 当内容为空时，确保背景能够完全覆盖且不产生滚动
+    min-height: calc(63vh - 8px - 42px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box; // 确保padding不会增加额外高度
+  }
 
   .content-item {
     padding: 15px;

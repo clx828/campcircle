@@ -1,11 +1,13 @@
 .wd-tabs__nav--wrap {
-  padding: 0 60px !important;
-  border-top-left-radius: 15px;
-  border-top-right-radius: 15px;
+	padding: 0 60px !important;
+	border-top-left-radius: 15px;
+	border-top-right-radius: 15px;
 }
+
 .wd-tabs__line {
 	background: #ff2948 !important;
 }
+
 .wd-navbar {
 	line-height: 1 !important;
 }
@@ -14,19 +16,38 @@
 	line-height: 44px !important;
 	margin-left: 20px !important;
 }
-.wd-navbar__text{
-	display: inline-flex; /* 或 inline-block */
-	align-items: center; /* 垂直居中内容 */
+
+.wd-navbar__text {
+	display: inline-flex;
+	/* 或 inline-block */
+	align-items: center;
+	/* 垂直居中内容 */
 	font-size: 16px;
-	line-height: 1; /* 避免行高影响 */
-	padding: 4px 12px; /* 适当调整 */
+	line-height: 1;
+	/* 避免行高影响 */
+	padding: 4px 12px;
+	/* 适当调整 */
 	background-color: #f5f5f5;
 	border-radius: 16px;
 	color: rgba(0, 0, 0, 0.9);
-	box-sizing: border-box; /* 让 padding 包含在高度内 */
-	vertical-align: middle; /* 避免 inline-block 基线问题 */
+	box-sizing: border-box;
+	/* 让 padding 包含在高度内 */
+	vertical-align: middle;
+	/* 避免 inline-block 基线问题 */
 	background: #ff2948;
 	color: #f5f5f5 !important;
 	font-family: '楷体';
 	margin-right: 100px;
+}
+
+.wd-button.is-plain.is-info.data-v-aa3a6253 {
+	color: #fefefe !important;
+	border: 1px solid;
+	border-color: #fefefe !important;
+	background: #232224 !important;
+}
+
+.wd-popup-wrapper.data-v-82a7a455 .wd-popup {
+	border-top-left-radius: 20rpx;
+	border-top-right-radius: 20rpx;
 }

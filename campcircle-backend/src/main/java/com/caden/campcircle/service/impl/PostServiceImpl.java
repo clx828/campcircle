@@ -1,5 +1,6 @@
 package com.caden.campcircle.service.impl;
 
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -12,20 +13,15 @@ import com.caden.campcircle.mapper.PostMapper;
 import com.caden.campcircle.mapper.PostThumbMapper;
 import com.caden.campcircle.model.dto.post.PostEsDTO;
 import com.caden.campcircle.model.dto.post.PostQueryRequest;
-import com.caden.campcircle.model.entity.Post;
-import com.caden.campcircle.model.entity.PostFavour;
-import com. caden.campcircle.model.entity.PostThumb;
-import com. caden.campcircle.model.entity.User;
-import com. caden.campcircle.model.vo.PostVO;
-import com. caden.campcircle.model.vo.UserVO;
-import com. caden.campcircle.service.PostService;
-import com. caden.campcircle.service.UserService;
-import com. caden.campcircle.utils.SqlUtils;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import com.caden.campcircle.model.entity.*;
+import com.caden.campcircle.model.vo.PostVO;
+import com.caden.campcircle.model.vo.UserVO;
+import com.caden.campcircle.service.PictureService;
+import com.caden.campcircle.service.PostService;
+import com.caden.campcircle.service.UserService;
+import com.caden.campcircle.utils.SqlUtils;
+
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -49,7 +45,7 @@ import org.springframework.stereotype.Service;
 /**
  * 帖子服务实现
  *
- 
+ * 
  */
 @Service
 @Slf4j
@@ -67,22 +63,21 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     @Resource
     private ElasticsearchRestTemplate elasticsearchRestTemplate;
 
+    @Resource
+    private PictureService pictureService;
+
     @Override
     public void validPost(Post post, boolean add) {
         if (post == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        String title = post.getTitle();
         String content = post.getContent();
         String tags = post.getTags();
         // 创建时，参数不能为空
         if (add) {
-            ThrowUtils.throwIf(StringUtils.isAnyBlank(title, content, tags), ErrorCode.PARAMS_ERROR);
+            ThrowUtils.throwIf(StringUtils.isAnyBlank(content, tags), ErrorCode.PARAMS_ERROR);
         }
         // 有参数则校验
-        if (StringUtils.isNotBlank(title) && title.length() > 80) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "标题过长");
-        }
         if (StringUtils.isNotBlank(content) && content.length() > 8192) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "内容过长");
         }
@@ -104,7 +99,6 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         String sortField = postQueryRequest.getSortField();
         String sortOrder = postQueryRequest.getSortOrder();
         Long id = postQueryRequest.getId();
-        String title = postQueryRequest.getTitle();
         String content = postQueryRequest.getContent();
         List<String> tagList = postQueryRequest.getTags();
         Long userId = postQueryRequest.getUserId();
@@ -113,7 +107,6 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         if (StringUtils.isNotBlank(searchText)) {
             queryWrapper.and(qw -> qw.like("title", searchText).or().like("content", searchText));
         }
-        queryWrapper.like(StringUtils.isNotBlank(title), "title", title);
         queryWrapper.like(StringUtils.isNotBlank(content), "content", content);
         if (CollUtil.isNotEmpty(tagList)) {
             for (String tag : tagList) {
@@ -133,7 +126,6 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         Long id = postQueryRequest.getId();
         Long notId = postQueryRequest.getNotId();
         String searchText = postQueryRequest.getSearchText();
-        String title = postQueryRequest.getTitle();
         String content = postQueryRequest.getContent();
         List<String> tagList = postQueryRequest.getTags();
         List<String> orTagList = postQueryRequest.getOrTags();
@@ -177,11 +169,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             boolQueryBuilder.should(QueryBuilders.matchQuery("content", searchText));
             boolQueryBuilder.minimumShouldMatch(1);
         }
-        // 按标题检索
-        if (StringUtils.isNotBlank(title)) {
-            boolQueryBuilder.should(QueryBuilders.matchQuery("title", title));
-            boolQueryBuilder.minimumShouldMatch(1);
-        }
+
         // 按内容检索
         if (StringUtils.isNotBlank(content)) {
             boolQueryBuilder.should(QueryBuilders.matchQuery("content", content));
@@ -263,6 +251,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         if (CollUtil.isEmpty(postList)) {
             return postVOPage;
         }
+
         // 1. 关联查询用户信息
         Set<Long> userIdSet = postList.stream().map(Post::getUserId).collect(Collectors.toSet());
         Map<Long, List<User>> userIdUserListMap = userService.listByIds(userIdSet).stream()
@@ -289,7 +278,25 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }
         // 填充信息
         List<PostVO> postVOList = postList.stream().map(post -> {
+            String pictureIdStr = post.getPictureList();
+            List<String> pictureIdList = JSONUtil.toList(pictureIdStr, String.class);
+            List<Long> pictureIds = pictureIdList.stream()
+                    .map(id -> {
+                        try {
+                            return Long.parseLong(id);
+                        } catch (NumberFormatException e) {
+                            log.warn("Invalid picture ID: {}", id);
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            List<Picture> pictures = pictureService.listByIds(pictureIds);
+            List<String> pictureUrlList = pictures.stream()
+                    .map(Picture::getPictureUrl)
+                    .collect(Collectors.toList());
             PostVO postVO = PostVO.objToVo(post);
+            postVO.setPictureUrlList(pictureUrlList);
             Long userId = post.getUserId();
             User user = null;
             if (userIdUserListMap.containsKey(userId)) {
@@ -298,6 +305,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             postVO.setUser(userService.getUserVO(user));
             postVO.setHasThumb(postIdHasThumbMap.getOrDefault(post.getId(), false));
             postVO.setHasFavour(postIdHasFavourMap.getOrDefault(post.getId(), false));
+            postVO.setPictureUrlList(pictureUrlList);
             return postVO;
         }).collect(Collectors.toList());
         postVOPage.setRecords(postVOList);
@@ -305,7 +313,3 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     }
 
 }
-
-
-
-

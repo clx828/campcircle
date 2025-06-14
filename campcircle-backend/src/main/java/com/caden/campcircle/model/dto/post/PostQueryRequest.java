@@ -31,11 +31,6 @@ public class PostQueryRequest extends PageRequest implements Serializable {
     private String searchText;
 
     /**
-     * 标题
-     */
-    private String title;
-
-    /**
      * 内容
      */
     private String content;

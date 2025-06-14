@@ -1,0 +1,470 @@
+<template>
+    <view class="comment-input-wrapper">
+        <!-- 输入框触发区域 -->
+        <view class="input-trigger" @click="showPopup = true">
+            <input type="text" :placeholder="placeholder" disabled />
+            <view class="trigger-icon">
+                <wd-icon name="edit" size="20px" color="#999" />
+            </view>
+        </view>
+
+        <!-- 弹出层 - 使用固定定位 -->
+        <view v-if="showPopup" class="popup-mask" @click="handleMaskClick">
+            <view class="comment-popup" :style="{
+                bottom: `${keyboardHeight}px`,
+                transition: keyboardHeight > 0 ? 'bottom 0.3s ease-out' : 'bottom 0.25s ease-in'
+            }" @click.stop="">
+                <!-- 顶部拖拽指示器 -->
+                <view class="popup-indicator">
+                    <view class="indicator-bar"></view>
+                </view>
+
+                <!-- 输入区域 -->
+                <view class="input-section">
+                    <view class="textarea-wrapper" :class="{ 'focus': isFocused }">
+                        <textarea v-model="commentText" :placeholder="placeholder" :focus="autoFocus"
+                            :adjust-position="false" :cursor-spacing="0" :show-confirm-bar="false" :auto-height="true"
+                            :hold-keyboard="true" maxlength="1000" class="comment-textarea" @focus="handleFocus"
+                            @blur="handleBlur" />
+                        <view class="char-count">{{ commentText.length }}/1000</view>
+                    </view>
+                </view>
+
+                <!-- 功能栏 -->
+                <view class="function-bar">
+                    <view class="function-left">
+                        <view class="function-item" @click="handleUploadImage">
+                            <wd-icon name="image" size="24px" color="#666" />
+                        </view>
+                        <view class="function-item" @click="handleMention">
+                            <wd-icon name="user" size="24px" color="#666" />
+                        </view>
+                        <view class="function-item" @click="handleEmoji">
+                            <wd-icon name="emoji" size="24px" color="#666" />
+                        </view>
+                    </view>
+
+                    <view class="function-right">
+                        <view class="anonymous-switch">
+                            <wd-switch v-model="isAnonymous" size="small" />
+                            <text class="anonymous-text">匿名</text>
+                        </view>
+                        <button class="send-btn" :class="{ 'active': commentText.trim() }"
+                            :disabled="!commentText.trim()" @click="handleSubmit">
+                            <wd-icon name="send" size="18px" />
+                        </button>
+                    </view>
+                </view>
+            </view>
+        </view>
+    </view>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
+
+const props = defineProps({
+    placeholder: {
+        type: String,
+        default: '说点什么...'
+    }
+})
+
+const emit = defineEmits(['submit', 'close'])
+
+// 状态管理
+const showPopup = ref(false)
+const commentText = ref('')
+const isAnonymous = ref(false)
+const keyboardHeight = ref(0)
+const safeAreaBottom = ref(0)
+const isFocused = ref(false)
+const autoFocus = ref(false)
+
+// 监听弹出层显示状态
+watch(showPopup, (newVal) => {
+    if (newVal) {
+        // 延迟自动聚焦，确保弹出层完全显示
+        setTimeout(() => {
+            autoFocus.value = true
+        }, 100)
+    } else {
+        autoFocus.value = false
+        keyboardHeight.value = 0
+        isFocused.value = false
+    }
+})
+
+// 监听键盘高度变化
+onMounted(() => {
+    // 获取系统信息
+    const systemInfo = uni.getSystemInfoSync()
+    safeAreaBottom.value = systemInfo.safeAreaInsets?.bottom || 0
+
+    console.log('系统信息:', systemInfo)
+    console.log('安全区域底部:', safeAreaBottom.value)
+
+    // 监听键盘高度变化
+    uni.onKeyboardHeightChange((res) => {
+        console.log('键盘高度变化:', res.height)
+        keyboardHeight.value = res.height
+
+        nextTick(() => {
+            console.log('弹出层底部位置:', keyboardHeight.value)
+        })
+    })
+})
+
+onUnmounted(() => {
+    uni.offKeyboardHeightChange()
+})
+
+// 处理焦点获取
+function handleFocus() {
+    isFocused.value = true
+    console.log('获取焦点')
+}
+
+// 处理焦点失去
+function handleBlur() {
+    console.log('失去焦点')
+    // 延迟处理，避免点击发送按钮时焦点丢失
+    setTimeout(() => {
+        isFocused.value = false
+    }, 100)
+}
+
+// 处理蒙层点击
+function handleMaskClick() {
+    if (!isFocused.value) {
+        handleClose()
+    }
+}
+
+// 处理关闭
+function handleClose() {
+    showPopup.value = false
+    commentText.value = ''
+    isAnonymous.value = false
+    emit('close')
+}
+
+// 处理提交
+function handleSubmit() {
+    if (!commentText.value.trim()) return
+
+    emit('submit', {
+        content: commentText.value,
+        isAnonymous: isAnonymous.value
+    })
+
+    handleClose()
+}
+
+// 处理上传图片
+function handleUploadImage() {
+    uni.chooseImage({
+        count: 9,
+        sizeType: ['compressed'],
+        sourceType: ['album', 'camera'],
+        success: (res) => {
+            console.log('选择的图片：', res.tempFilePaths)
+            // TODO: 处理图片上传逻辑
+        }
+    })
+}
+
+// 处理@好友
+function handleMention() {
+    console.log('点击@好友')
+}
+
+// 处理表情
+function handleEmoji() {
+    console.log('点击表情')
+}
+</script>
+
+<style lang="scss" scoped>
+.comment-input-wrapper {
+    width: 100%;
+}
+
+.input-trigger {
+    width: 100%;
+    height: 80rpx;
+    background: #f8f9fa;
+    border-radius: 40rpx;
+    padding: 0 30rpx;
+    display: flex;
+    align-items: center;
+    border: 2rpx solid transparent;
+    transition: all 0.3s ease;
+
+    &:active {
+        background: #f0f0f0;
+        transform: scale(0.98);
+    }
+
+    input {
+        flex: 1;
+        height: 100%;
+        font-size: 28rpx;
+        color: #333;
+
+        &::placeholder {
+            color: #999;
+        }
+    }
+
+    .trigger-icon {
+        margin-left: 20rpx;
+        opacity: 0.6;
+    }
+}
+
+// 弹出层蒙层
+.popup-mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+    display: flex;
+    align-items: flex-end;
+}
+
+// 弹出层主体
+.comment-popup {
+    position: absolute;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-top-left-radius: 24rpx;
+    border-top-right-radius: 24rpx;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 -8rpx 32rpx rgba(0, 0, 0, 0.15);
+    max-height: 70vh;
+    min-height: 300rpx;
+}
+
+.popup-indicator {
+    padding: 16rpx 0 8rpx;
+    display: flex;
+    justify-content: center;
+    background: #fff;
+    flex-shrink: 0;
+
+    .indicator-bar {
+        width: 60rpx;
+        height: 6rpx;
+        background: #e0e0e0;
+        border-radius: 3rpx;
+    }
+}
+
+.input-section {
+    padding: 0 24rpx 16rpx;
+    background: #fff;
+    flex-shrink: 0;
+
+    .textarea-wrapper {
+        position: relative;
+        background: #f8f9fa;
+        border-radius: 16rpx;
+        padding: 24rpx;
+        border: 2rpx solid #f0f0f0;
+        transition: all 0.3s ease;
+
+        &.focus {
+            border-color: #007AFF;
+            background: #fff;
+            box-shadow: 0 0 0 4rpx rgba(0, 122, 255, 0.1);
+        }
+
+        .comment-textarea {
+            width: 100%;
+            min-height: 80rpx;
+            max-height: 200rpx;
+            font-size: 32rpx;
+            line-height: 1.6;
+            color: #333;
+            background: transparent;
+            border: none;
+            outline: none;
+            resize: none;
+
+            &::placeholder {
+                color: #999;
+            }
+        }
+
+        .char-count {
+            position: absolute;
+            bottom: 8rpx;
+            right: 16rpx;
+            font-size: 24rpx;
+            color: #999;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 4rpx 8rpx;
+            border-radius: 8rpx;
+        }
+    }
+}
+
+.function-bar {
+    padding: 16rpx 24rpx;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    border-top: 1rpx solid #f0f0f0;
+    flex-shrink: 0;
+
+    .function-left {
+        display: flex;
+        align-items: center;
+        gap: 32rpx;
+
+        .function-item {
+            width: 72rpx;
+            height: 72rpx;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+
+            &:active {
+                background: #e9ecef;
+                transform: scale(0.95);
+            }
+        }
+    }
+
+    .function-right {
+        display: flex;
+        align-items: center;
+        gap: 24rpx;
+
+        .anonymous-switch {
+            display: flex;
+            align-items: center;
+            gap: 12rpx;
+
+            .anonymous-text {
+                font-size: 26rpx;
+                color: #666;
+            }
+        }
+
+        .send-btn {
+            width: 72rpx;
+            height: 72rpx;
+            border-radius: 50%;
+            background: #e9ecef;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+            &.active {
+                background: linear-gradient(135deg, #007AFF, #5856D6);
+                box-shadow: 0 8rpx 24rpx rgba(0, 122, 255, 0.3);
+                transform: scale(1.05);
+
+                :deep(.wd-icon) {
+                    color: #fff !important;
+                }
+            }
+
+            &:disabled {
+                opacity: 0.5;
+                transform: scale(1);
+                box-shadow: none;
+            }
+
+            &:not(:disabled):active {
+                transform: scale(0.95);
+            }
+        }
+    }
+}
+
+// 弹出动画
+.popup-mask {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.comment-popup {
+    animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+// 适配暗黑模式
+@media (prefers-color-scheme: dark) {
+    .popup-mask {
+        background: rgba(0, 0, 0, 0.7);
+    }
+
+    .comment-popup {
+        background: #1c1c1e;
+    }
+
+    .input-section .textarea-wrapper {
+        background: #2c2c2e;
+        border-color: #3a3a3c;
+
+        &.focus {
+            border-color: #007AFF;
+            background: #1c1c1e;
+        }
+
+        .comment-textarea {
+            color: #fff;
+
+            &::placeholder {
+                color: #8e8e93;
+            }
+        }
+    }
+
+    .function-bar {
+        background: #1c1c1e;
+        border-top-color: #3a3a3c;
+
+        .function-item {
+            background: #2c2c2e;
+
+            &:active {
+                background: #3a3a3c;
+            }
+        }
+    }
+}
+</style>

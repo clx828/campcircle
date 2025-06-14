@@ -23,11 +23,6 @@ public class PostVO implements Serializable {
     private Long id;
 
     /**
-     * 标题
-     */
-    private String title;
-
-    /**
      * 内容
      */
     private String content;
@@ -35,7 +30,7 @@ public class PostVO implements Serializable {
     /**
      * 图片列表
      */
-    private List<Picture> pictureList;
+    private List<String> pictureUrlList;
 
     /**
      * 点赞数
@@ -46,6 +41,10 @@ public class PostVO implements Serializable {
      * 收藏数
      */
     private Integer favourNum;
+    /**
+     * 评论数
+     */
+    private Integer commentNum;
 
     /**
      * 创建用户 id
@@ -112,6 +111,7 @@ public class PostVO implements Serializable {
         PostVO postVO = new PostVO();
         BeanUtils.copyProperties(post, postVO);
         postVO.setTagList(JSONUtil.toList(post.getTags(), String.class));
+        postVO.setPictureUrlList(JSONUtil.toList(post.getPictureList(), String.class));
         return postVO;
     }
 }

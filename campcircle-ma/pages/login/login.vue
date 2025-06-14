@@ -5,21 +5,22 @@
             <image class="background-image bg-1" src="/static/img/loginbg.jpg" mode="aspectFill"></image>
             <image class="background-image bg-2" src="/static/img/loginbg.jpg" mode="aspectFill"></image>
         </view>
-        
+
         <!-- 内容区域 -->
         <view class="content-wrapper">
             <!-- Logo区域 -->
             <view class="logo-area">
-                <image class="logo" src="/static/logo.png" mode="aspectFit" />
+                <image class="logo"
+                    src="https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png"
+                    mode="aspectFit" />
                 <text class="slogan">探索精彩，分享生活</text>
             </view>
 
             <!-- 表单区域 -->
             <view class="form-area">
-            
+
                 <!-- 登录按钮 -->
-                <button class="login-btn" 
-                    @tap="handleLogin()">
+                <button class="login-btn" @tap="handleLogin()">
                     使用微信登录
                 </button>
 
@@ -31,13 +32,9 @@
                         <view class="line"></view>
                     </view>
                     <view class="third-party-icons">
-                        <view class="icon-item" @tap="handleThirdPartyLogin('weixin')">
-                            <text class="iconfont icon-weixin"></text>
-                            <text class="icon-text">微信</text>
-                        </view>
                         <view class="icon-item" @tap="handleThirdPartyLogin('qq')">
-                            <text class="iconfont icon-qq"></text>
-                            <text class="icon-text">QQ</text>
+                            <image src="../../static/button/phone-login.png"></image>
+                            <text class="icon-text">手机号</text>
                         </view>
                     </view>
                 </view>
@@ -60,35 +57,22 @@
                     <text class="modal-title">完善个人信息</text>
                     <text class="modal-subtitle">获取您的头像和昵称，完善个人资料</text>
                 </view>
-                
+
                 <view class="auth-content">
                     <view class="avatar-section">
-                        <image 
-                            v-if="tempUserInfo.avatarUrl" 
-                            :src="tempUserInfo.avatarUrl" 
-                            class="preview-avatar"
-                        />
+                        <image v-if="tempUserInfo.avatarUrl" :src="tempUserInfo.avatarUrl" class="preview-avatar" />
                         <view v-else class="default-avatar">
                             <text class="iconfont icon-user"></text>
                         </view>
-                        <button 
-                            class="choose-avatar-btn" 
-                            open-type="chooseAvatar"
-                            @chooseavatar="onChooseAvatar"
-                        >
+                        <button class="choose-avatar-btn" open-type="chooseAvatar" @chooseavatar="onChooseAvatar">
                             选择头像
                         </button>
                     </view>
-                    
+
                     <view class="nickname-section">
                         <text class="label">昵称</text>
-                        <input 
-                            class="nickname-input"
-                            type="nickname"
-                            v-model="tempUserInfo.nickName"
-                            placeholder="请输入昵称"
-                            :maxlength="20"
-                        />
+                        <input class="nickname-input" type="nickname" v-model="tempUserInfo.nickName"
+                            placeholder="请输入昵称" :maxlength="20" />
                     </view>
                 </view>
 
@@ -120,7 +104,7 @@ const tempUserInfo = ref({
 // 微信登录
 const handleLogin = async () => {
     try {
-		uni.vibrateShort()
+        uni.vibrateShort()
         // 显示加载提示
         uni.showLoading({
             title: '登录中...',
@@ -138,16 +122,16 @@ const handleLogin = async () => {
         const res = await userApi.login({
             code: loginRes.code,
         })
-        
+
         // 隐藏加载提示
         uni.hideLoading()
         userStore.setUserInfo(res.data)
-        
+
         // 检查是否首次登录（头像为空）
         if (!res.data.userAvatar || res.data.userAvatar === null) {
             firstLogin.value = true
             showAuthModal.value = true
-            
+
             // 显示欢迎提示
             uni.showToast({
                 title: '欢迎加入！',
@@ -161,16 +145,16 @@ const handleLogin = async () => {
                 icon: 'success',
                 duration: 2000
             })
-            
+
             navigateToHome()
         }
 
     } catch (e) {
         console.log("登录失败：", e)
-        
+
         // 隐藏加载提示
         uni.hideLoading()
-        
+
         // 显示错误提示
         uni.showToast({
             title: e.message || '登录失败，请重试',
@@ -220,7 +204,7 @@ const confirmAuth = async () => {
         userStore.setUserInfo(updatedUserInfo)
 
         uni.hideLoading()
-        
+
         uni.showToast({
             title: '设置成功',
             icon: 'success',
@@ -318,17 +302,17 @@ const goToPrivacyPolicy = () => {
     width: 100%;
     height: 200vh;
     z-index: -1;
-    
+
     .background-image {
         position: absolute;
         width: 100%;
         height: 100vh;
-        
+
         &.bg-1 {
             top: 0;
             animation: scrollUp 20s linear infinite;
         }
-        
+
         &.bg-2 {
             top: 100vh;
             animation: scrollUp 20s linear infinite;
@@ -340,6 +324,7 @@ const goToPrivacyPolicy = () => {
     0% {
         transform: translateY(0);
     }
+
     100% {
         transform: translateY(-100vh);
     }
@@ -390,7 +375,7 @@ const goToPrivacyPolicy = () => {
     &::after {
         border: none;
     }
-    
+
     &:active {
         transform: translateY(2rpx);
         box-shadow: 0 2rpx 8rpx rgba(255, 36, 66, 0.4);
@@ -419,31 +404,28 @@ const goToPrivacyPolicy = () => {
     }
 
     .third-party-icons {
-        margin-top: 40rpx;
         display: flex;
         justify-content: center;
+        margin-top: 30rpx;
+    }
 
-        .icon-item {
-            margin: 0 40rpx;
-            text-align: center;
-            transition: transform 0.3s ease;
+    .icon-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 0 40rpx;
+    }
 
-            &:active {
-                transform: scale(0.95);
-            }
+    .icon-item image {
+        width: 80rpx;
+        height: 80rpx;
+        margin-bottom: 10rpx;
+    }
 
-            .iconfont {
-                font-size: 80rpx;
-                color: #ffffff;
-            }
-
-            .icon-text {
-                display: block;
-                margin-top: 10rpx;
-                font-size: 24rpx;
-                color: #dddddd;
-            }
-        }
+    .icon-text {
+        font-size: 24rpx;
+        color: #666;
+        margin-top: 8rpx;
     }
 }
 
@@ -501,6 +483,7 @@ const goToPrivacyPolicy = () => {
         transform: translateY(50rpx);
         opacity: 0;
     }
+
     to {
         transform: translateY(0);
         opacity: 1;

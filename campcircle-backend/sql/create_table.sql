@@ -55,7 +55,8 @@ create table if not exists post
     isDelete   tinyint  default 0                 not null comment '是否删除',
     index idx_userId (userId)
 ) comment '帖子' collate = utf8mb4_unicode_ci;
-ALTER TABLE post ADD COLUMN picture_list VARCHAR(255) DEFAULT '[]' COMMENT '图片ID列表';
+ALTER TABLE post ADD COLUMN pictureList VARCHAR(255)  COMMENT '图片ID列表';
+ALTER TABLE post DROP COLUMN title;
 
 -- 帖子点赞表（硬删除）
 create table if not exists post_thumb

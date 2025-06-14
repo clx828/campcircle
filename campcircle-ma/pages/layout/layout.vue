@@ -1,22 +1,17 @@
 <template>
   <view class="layout">
-   <view class="main-content">
-       <Home v-if="activeTab === 0" />
-       <Follow v-else-if="activeTab === 1" /> 
-       <Publish v-else-if="activeTab === 2" />
-       <Info v-else-if="activeTab === 3" />
-       <Mine v-else-if="activeTab === 4" />
-     </view>
+    <view class="main-content">
+      <Home v-if="activeTab === 0" />
+      <Follow v-else-if="activeTab === 1" />
+      <Publish v-else-if="activeTab === 2" />
+      <Info v-else-if="activeTab === 3" />
+      <Mine v-else-if="activeTab === 4" />
+    </view>
 
     <view class="tabbar">
-      <wd-tabbar
-        v-model="activeTab"
-        @change="handleChange"
-        active-color="#ee0a24"
-        inactive-color="#7d7e80"
-      >
+      <wd-tabbar v-model="activeTab" @change="handleChange" active-color="#ee0a24" inactive-color="#7d7e80">
         <!-- 首页 -->
-		
+
         <wd-tabbar-item :value="0" title="首页">
           <template v-if="activeTab !== 0" #icon>
             <wd-img round height="40rpx" width="40rpx" src="/static/img/tabbar/home.png" />
@@ -40,9 +35,6 @@
         <wd-tabbar-item :value="2" title="发布">
           <template v-if="activeTab !== 2" #icon>
             <wd-img round height="40rpx" width="40rpx" src="/static/img/tabbar/add.png" />
-          </template>
-          <template v-else #icon>
-            <wd-img round height="40rpx" width="40rpx" src="/static/img/tabbar/addactive.png" />
           </template>
         </wd-tabbar-item>
 
@@ -107,14 +99,14 @@ const tabPages = ref([
 
 
 
-const handleChange =(index) =>{
-	uni.vibrateShort()
-	console.log("这是",index)
+const handleChange = (index) => {
+  uni.vibrateShort()
+  console.log("这是", index)
   console.log('切换到tab:', tabPages.value[index.value].needLogin)
-	if(tabPages.value[index.value].needLogin){
-		checkAuth()
-	}
-	return
+  if (tabPages.value[index.value].needLogin) {
+    checkAuth()
+  }
+  return
 }
 
 const checkAuth = () => {
@@ -134,12 +126,12 @@ const checkAuth = () => {
 
 <style>
 .tabbar {
-	background-color: #ffffff;
+  background-color: #ffffff;
   padding-bottom: 10px;
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 999;
+  z-index: 99;
 }
 </style>

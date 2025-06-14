@@ -17,7 +17,7 @@ const props = defineProps({
 <style scoped lang="scss">
 .empty-state {
     width: 100%;
-    height: 50vh;
+    height: 100%;
     /* 占父容器上半部分 */
     display: flex;
     flex-direction: column;

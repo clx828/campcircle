@@ -2,7 +2,7 @@
   <view class="release-container">
     <!-- 顶部栏 -->
     <view class="header-xhs" :style="headerStyle">
-      <wd-navbar title="发笔记" left-text="返回" right-text="发布" left-arrow>
+      <wd-navbar title="发笔记" left-text="返回" right-text="发布" @click-right="onPublish" left-arrow>
         <template #capsule>
           <wd-navbar-capsule @back="handleBack" @back-home="handleBackHome" />
         </template>
@@ -10,17 +10,19 @@
     </view>
     <!-- 内容输入区 -->
     <view class="note-area-xhs">
-      <textarea v-model="noteContent" class="note-input-xhs" placeholder="分享你的生活、美好瞬间..." :focus="inputFocus"
-        @focus="inputFocus = true" @blur="inputFocus = false" maxlength="1000" />
+      <textarea v-model="state.noteContent" class="note-input-xhs" placeholder="分享你的生活、美好瞬间..."
+        :focus="state.inputFocus" @focus="state.inputFocus = true" @blur="state.inputFocus = false" maxlength="1000" />
       <view class="note-tip-xhs">请勿发布违法、低俗、广告等内容，违者封号处理。</view>
     </view>
     <!-- 图片上传九宫格 -->
     <view class="image-grid">
-      <view v-for="(img, idx) in images" :key="idx" class="img-item">
-        <image :src="img" mode="aspectFill" class="img-preview" @click="previewImage(idx)" />
-        <view class="img-delete" @click="removeImage(idx)"><text class="iconfont">&#xe601;</text></view>
+      <view v-for="(img, idx) in state.pictures" :key="img.pictureId || idx" class="img-item">
+        <image :src="img.url" mode="aspectFill" class="img-preview" @click="previewImage(idx)" />
+        <view class="img-delete" @click="removeImage(idx)">
+          <wd-icon name="close" color="#ff2948" size="16px"></wd-icon>
+        </view>
       </view>
-      <view v-if="images.length < 9" class="img-item add-item" @click="chooseImage">
+      <view v-if="state.pictures.length < 9" class="img-item add-item" @click="chooseImage">
         <text class="add-icon">+</text>
       </view>
     </view>
@@ -28,15 +30,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/userStore'
 import RouterGuard from '@/utils/routerGuard'
 import { postApi } from '@/api/post'
+interface PostParams {
+  pictureList: string[],
+  tags: string[],
+  content: string
+}
+interface PictureParam {
+  url: string
+  pictureId: string
+}
 
-const noteContent = ref('')
-const inputFocus = ref(false)
-const images = ref<string[]>([])
+const state = reactive({
+  noteContent: '',
+  inputFocus: false,
+  pictures: [] as PictureParam[]
+})
+const addPostParams = reactive<PostParams>({
+  pictureList: [],
+  tags: [],
+  content: ''
+})
 
 // 胶囊按钮和状态栏信息
 const capsuleInfo = ref({
@@ -74,48 +92,87 @@ function onBack() {
   uni.navigateBack()
 }
 
-function onPublish() {
-  if (!noteContent.value.trim() && images.value.length === 0) {
+const onPublish = async () => {
+  uni.vibrateShort()
+  if (!state.noteContent.trim() && state.pictures.length === 0) {
     uni.showToast({ title: '请输入内容或添加图片', icon: 'none' })
     return
   }
-  // TODO: 发布逻辑
-  uni.showToast({ title: '发布成功', icon: 'success' })
-  noteContent.value = ''
-  images.value = []
+  uni.showLoading({ title: '发布中...', mask: true })
+  addPostParams.pictureList = state.pictures.map(p => p.pictureId)
+  addPostParams.content = state.noteContent
+  try {
+    const res = await postApi.addPost(addPostParams)
+    if (res.code === 0 && res.data) {
+      // 发布成功，重置数据
+      state.noteContent = ''
+      state.pictures = []
+      addPostParams.pictureList = []
+      addPostParams.content = ''
+      uni.showToast({ title: '发布成功', icon: 'success' })
+    } else {
+      uni.showToast({ title: res.msg || '发布失败', icon: 'error' })
+    }
+  } catch (e) {
+    uni.showToast({ title: '发布失败', icon: 'error' })
+  } finally {
+    uni.hideLoading()
+  }
 }
 
-function chooseImage() {
+const chooseImage = async () => {
+  const remainingSlots = 9 - state.pictures.length
+  if (remainingSlots <= 0) {
+    uni.showToast({ title: '最多只能上传9张图片', icon: 'none' })
+    return
+  }
+
   uni.chooseImage({
-    count: 9 - images.value.length,
+    count: remainingSlots,
     sizeType: ['compressed'],
     success: async (res) => {
-      // 上传所有新选图片
+      uni.showLoading({ title: '上传中...', mask: true })
       const uploadPromises = res.tempFilePaths.map(filePath => postApi.uploadPicture(filePath))
       try {
         const results = await Promise.all(uploadPromises)
-        // 使用后端返回的pictureUrl字段做回显
-        const urls = results.map(r => r.data.pictureUrl)
-        images.value = images.value.concat(urls).slice(0, 9)
+        const newPics: PictureParam[] = results.map(r => ({
+          url: r.data.pictureUrl,
+          pictureId: r.data.id
+        }))
+        // 确保不超过9张图片
+        const totalPics = [...state.pictures, ...newPics].slice(0, 9)
+        state.pictures = totalPics
       } catch (e) {
+        console.error('图片上传失败:', e)
         uni.showToast({ title: '图片上传失败', icon: 'none' })
+      } finally {
+        uni.hideLoading()
       }
+    },
+    fail: (err) => {
+      console.error('选择图片失败:', err)
     }
   })
 }
 
 function removeImage(idx: number) {
-  images.value.splice(idx, 1)
+  if (idx >= 0 && idx < state.pictures.length) {
+    state.pictures.splice(idx, 1)
+  }
 }
 
 function previewImage(idx: number) {
+  if (state.pictures.length === 0 || idx < 0 || idx >= state.pictures.length) {
+    return
+  }
+
   uni.previewImage({
-    urls: images.value,
-    current: images.value[idx]
+    urls: state.pictures.map(item => item.url),
+    current: state.pictures[idx].url
   })
 }
 
-//导航栏路由跳转逻辑
+// 导航栏路由跳转逻辑
 function handleBack() {
   uni.navigateBack({})
 }
@@ -213,8 +270,8 @@ onShow(() => {
   margin: 32rpx 24rpx 0 24rpx;
 
   .img-item {
-    width: 32vw;
-    height: 32vw;
+    width: calc((100% - 36rpx) / 3);
+    aspect-ratio: 1 / 1;
     background: #f6f6f6;
     border-radius: 12rpx;
     position: relative;
@@ -234,7 +291,7 @@ onShow(() => {
       position: absolute;
       top: 8rpx;
       right: 8rpx;
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(255, 41, 72, 0.3);
       border-radius: 50%;
       width: 40rpx;
       height: 40rpx;
