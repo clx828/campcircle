@@ -7,7 +7,7 @@
           src="https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png" />
       </view>
       <view class="search-bar" :style="searchBarStyle">
-        <image src="/static/icons/search.png" mode="aspectFit" />
+        <image src="/static/button/shousuo.png" mode="aspectFit" />
         <span>搜索</span>
       </view>
       <view class="placeholder"></view>
@@ -22,7 +22,7 @@
       </view>
       <view class="post-list">
         <SocialCard v-for="post in postList" :key="post.id" :cardInfo="post" @like="handleLike" @collect="handleCollect"
-          @comment="handleComment" @share="handleShare" />
+          @comment="handleComment" @share="handleShare" @follow="handleFollow" />
       </view>
       <view v-if="postList.length === 0" class="empty-tip">
         <text>暂无动态</text>
@@ -246,6 +246,14 @@ function handleShare() {
     withShareTicket: true,
     menus: ['shareAppMessage', 'shareTimeline']
   })
+}
+
+// 处理关注
+function handleFollow(data: { id: string; hasFollow: boolean; isRollback: boolean }) {
+  const post = postList.value.find(p => p.user.id === data.id)
+  if (post) {
+    post.hasFollow = data.hasFollow
+  }
 }
 
 onMounted(() => {

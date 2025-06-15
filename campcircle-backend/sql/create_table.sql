@@ -138,3 +138,5 @@ create table if not exists post_comment
     index idx_postId (postId),
     index idx_userId (userId)
 ) comment '评论' collate = utf8mb4_unicode_ci;
+alter table post_comment
+    add column level tinyint default 1 not null comment '评论层级：1一级评论，2二级评论';

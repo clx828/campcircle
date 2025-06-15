@@ -80,6 +80,15 @@ public class PostVO implements Serializable {
      * 是否已收藏
      */
     private Boolean hasFavour;
+    /**
+     * 是否已关注
+     */
+    private Boolean hasFollow;
+
+    /**
+     * 是否匿名
+     */
+    private Boolean isAnonymous;
 
     /**
      * 包装类转对象

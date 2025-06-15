@@ -4,27 +4,41 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 @Component
 public class JwtUtils {
-    // Token expiration time (24 hours)
+    // Token过期时间（24小时）
     private static final long EXPIRATION_TIME = 24 * 60 * 60 * 1000;
 
-    // Generate a secure key for HS256
-    private static final SecretKey SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    // 从配置文件读取JWT密钥，如果没有配置则使用默认值
+    @Value("${jwt.secret}")
+    private String jwtSecret;
 
     /**
-     * Generate JWT token
+     * 获取签名密钥
      *
-     * @param userId   user ID
-     * @param userRole user role
-     * @return JWT token
+     * @return 签名密钥
+     */
+    private SecretKey getSigningKey() {
+        // 确保密钥长度足够（至少32字符）
+        String key = jwtSecret.length() >= 32 ? jwtSecret : jwtSecret + "padding-to-make-key-long-enough";
+        return Keys.hmacShaKeyFor(key.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * 生成JWT令牌
+     *
+     * @param userId   用户ID
+     * @param userRole 用户角色
+     * @return JWT令牌
      */
     public String generateToken(Long userId, String userRole) {
         Map<String, Object> claims = new HashMap<>();
@@ -35,20 +49,20 @@ public class JwtUtils {
                 .setClaims(claims)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .signWith(SECRET_KEY)
+                .signWith(getSigningKey())
                 .compact();
     }
 
     /**
-     * Validate JWT token
+     * 验证JWT令牌
      *
-     * @param token JWT token
-     * @return Claims if valid, null if invalid
+     * @param token JWT令牌
+     * @return 如果有效返回Claims，无效返回null
      */
     public Claims validateToken(String token) {
         try {
             return Jwts.parserBuilder()
-                    .setSigningKey(SECRET_KEY)
+                    .setSigningKey(getSigningKey())
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
@@ -58,10 +72,10 @@ public class JwtUtils {
     }
 
     /**
-     * Get user ID from token
+     * 从令牌中获取用户ID
      *
-     * @param token JWT token
-     * @return user ID
+     * @param token JWT令牌
+     * @return 用户ID
      */
     public Long getUserIdFromToken(String token) {
         Claims claims = validateToken(token);
@@ -69,10 +83,10 @@ public class JwtUtils {
     }
 
     /**
-     * Get user role from token
+     * 从令牌中获取用户角色
      *
-     * @param token JWT token
-     * @return user role
+     * @param token JWT令牌
+     * @return 用户角色
      */
     public String getUserRoleFromToken(String token) {
         Claims claims = validateToken(token);

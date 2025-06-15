@@ -22,7 +22,7 @@
         </wd-tabbar-item>
 
         <!-- 关注 -->
-        <wd-tabbar-item :value="1" title="关注">
+        <wd-tabbar-item  title="关注">
           <template v-if="activeTab !== 1" #icon>
             <wd-img round height="40rpx" width="40rpx" src="/static/img/tabbar/guanzhu.png" />
           </template>
@@ -32,7 +32,7 @@
         </wd-tabbar-item>
 
         <!-- 发布 -->
-        <wd-tabbar-item :value="2" title="发布">
+        <wd-tabbar-item title="发布">
           <template v-if="activeTab !== 2" #icon>
             <wd-img round height="40rpx" width="40rpx" src="/static/img/tabbar/add.png" />
           </template>
@@ -49,7 +49,7 @@
         </wd-tabbar-item>
 
         <!-- 我的 -->
-        <wd-tabbar-item :value="4" title="我的">
+        <wd-tabbar-item  title="我的">
           <template v-if="activeTab !== 4" #icon>
             <wd-img round height="40rpx" width="40rpx" src="/static/img/tabbar/me.png" />
           </template>

@@ -8,6 +8,7 @@ import com.caden.campcircle.common.ErrorCode;
 import com.caden.campcircle.constant.CommonConstant;
 import com.caden.campcircle.exception.BusinessException;
 import com.caden.campcircle.exception.ThrowUtils;
+import com.caden.campcircle.mapper.FollowMapper;
 import com.caden.campcircle.mapper.PostFavourMapper;
 import com.caden.campcircle.mapper.PostMapper;
 import com.caden.campcircle.mapper.PostThumbMapper;
@@ -59,6 +60,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
     @Resource
     private PostFavourMapper postFavourMapper;
+
+    @Resource
+    private FollowMapper followMapper;
 
     @Resource
     private ElasticsearchRestTemplate elasticsearchRestTemplate;
@@ -259,6 +263,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         // 2. 已登录，获取用户点赞、收藏状态
         Map<Long, Boolean> postIdHasThumbMap = new HashMap<>();
         Map<Long, Boolean> postIdHasFavourMap = new HashMap<>();
+        Map<Long, Boolean> userIdHasFollowMap = new HashMap<>();
         User loginUser = userService.getLoginUserPermitNull(request);
         if (loginUser != null) {
             Set<Long> postIdSet = postList.stream().map(Post::getId).collect(Collectors.toSet());
@@ -275,6 +280,12 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             postFavourQueryWrapper.eq("userId", loginUser.getId());
             List<PostFavour> postFavourList = postFavourMapper.selectList(postFavourQueryWrapper);
             postFavourList.forEach(postFavour -> postIdHasFavourMap.put(postFavour.getPostId(), true));
+            //获取关注
+            QueryWrapper<Follow> FollowQueryWrapper = new QueryWrapper<>();
+            FollowQueryWrapper.eq("userId", loginUser.getId());
+            FollowQueryWrapper.in("followUserId",userIdSet);
+            List<Follow> followList = followMapper.selectList(FollowQueryWrapper);
+            followList.forEach(follow -> userIdHasFollowMap.put(follow.getFollowUserId(), true));
         }
         // 填充信息
         List<PostVO> postVOList = postList.stream().map(post -> {
@@ -303,6 +314,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
                 user = userIdUserListMap.get(userId).get(0);
             }
             postVO.setUser(userService.getUserVO(user));
+            postVO.setHasFollow(userIdHasFollowMap.getOrDefault(post.getUserId(), false));
             postVO.setHasThumb(postIdHasThumbMap.getOrDefault(post.getId(), false));
             postVO.setHasFavour(postIdHasFavourMap.getOrDefault(post.getId(), false));
             postVO.setPictureUrlList(pictureUrlList);

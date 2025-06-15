@@ -6,8 +6,9 @@ build/
 # Maven (后端)相关的文件
 target/
 *.log
+application.yml
 
-picture-backend/src/main/resources/application-local.yml
+campcircle-backend/src/main/resources/application.yml
 # JetBrains IDE（如 IntelliJ IDEA）配置
 .idea/
 
