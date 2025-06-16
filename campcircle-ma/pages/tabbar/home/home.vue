@@ -15,7 +15,8 @@
 
     <!-- 可滚动的内容区域 -->
     <scroll-view scroll-y class="scroll-view" refresher-enabled :refresher-triggered="refresherTriggered"
-      @refresherrefresh="onRefresh" :style="{ height: `calc(100vh - ${menuButtonHeight + statusBarHeight}px - 60px)` }">
+      @refresherrefresh="onRefresh" @scrolltolower="onScrollToLower"
+      :style="{ height: `calc(100vh - ${menuButtonHeight + statusBarHeight}px - 60px)` }">
       <view class="swiper-container" style="background: #FFFFFF; width: 100%;">
         <wd-swiper :list="swiperList" autoplay v-model:current="current" :indicator="{ type: 'dots-bar' }"
           @click="handleClick"></wd-swiper>
@@ -24,32 +25,25 @@
         <SocialCard v-for="post in postList" :key="post.id" :cardInfo="post" @like="handleLike" @collect="handleCollect"
           @comment="handleComment" @share="handleShare" @follow="handleFollow" />
       </view>
-      <view v-if="postList.length === 0" class="empty-tip">
+      <view v-if="postList.length === 0 && !postLoading" class="empty-tip">
         <text>暂无动态</text>
       </view>
-      <view v-if="hasMore" class="loading-more">
-        <text>加载更多...</text>
+      <view v-if="postLoading" class="loading-more">
+        <text>加载中...</text>
       </view>
-      <view v-else class="no-more">
-        <text>没有更多了</text>
+      <view v-else-if="hasMore" class="loading-more">
+        <text>上拉加载更多</text>
       </view>
+      <view v-else-if="postList.length > 0" class="no-more">
+        <text>—— THE END ——</text>
+      </view>
+      <!-- 底部占位，避免被tabbar遮挡 -->
+      <view class="bottom-space"></view>
     </scroll-view>
 
     <!-- 评论弹窗 -->
-    <wd-popup :z-index="9999" v-model="showCommentPopup" position="bottom" closable custom-style="height: 500px;"
-      @close="handleCommentClose">
-      <view class="comment-popup">
-        <view class="comment-header">
-          <text class="title">评论</text>
-        </view>
-        <view class="comment-content">
-          <!-- 评论列表 -->
-        </view>
-        <view class="comment-input">
-          <CommentInput placeholder="说点什么..." @submit="handleSubmit" @close="handleClose" />
-        </view>
-      </view>
-    </wd-popup>
+    <CommentPopup v-model:show="showCommentPopup" :post-id="currentPostId" @close="handleCommentPopupClose"
+      @comment-success="handleCommentSuccess" />
   </view>
 </template>
 
@@ -59,6 +53,9 @@ import SocialCard from '@/components/SocialCard.vue'
 import { postApi } from '@/api/post'
 import type { ListPostVOByPageParams } from '@/api/post'
 import CommentInput from '@/components/CommentInput.vue'
+import CommentList from '@/components/CommentList.vue'
+import { postCommentApi } from '@/api/postComment'
+import CommentPopup from '@/components/CommentPopup.vue'
 
 // 帖子列表数据
 const postList = ref<any[]>([])
@@ -66,6 +63,7 @@ const current = ref(1)
 const pageSize = ref(10)
 const refresherTriggered = ref(false)
 const hasMore = ref(true)
+const postLoading = ref(false) // 帖子加载状态
 
 // 胶囊按钮和状态栏信息
 const menuButtonHeight = ref(32)
@@ -147,33 +145,41 @@ const goToSearch = () => {
 
 // 加载帖子列表
 const loadPosts = async (isRefresh = false) => {
+  if (postLoading.value) return // 防止重复加载
+
   try {
+    postLoading.value = true
     const params: ListPostVOByPageParams = {
       current: current.value,
       pageSize: pageSize.value
     }
     const res = await postApi.listPostVOByPage(params)
     if (res.code === 0 && res.data) {
+      const newPosts = res.data.records || []
       if (isRefresh) {
-        postList.value = res.data.records
+        postList.value = newPosts
       } else {
-        postList.value = [...postList.value, ...res.data.records]
+        postList.value = [...postList.value, ...newPosts]
       }
       // 更新 hasMore 状态
-      hasMore.value = res.data.records.length === pageSize.value
+      hasMore.value = newPosts.length === pageSize.value
     }
   } catch (error) {
     uni.showToast({
       title: '加载失败',
       icon: 'error'
     })
+  } finally {
+    postLoading.value = false
   }
 }
 
-// 加载更多
-const loadMore = () => {
-  current.value++
-  loadPosts()
+// 滚动到底部时加载更多帖子
+const onScrollToLower = () => {
+  if (hasMore.value && !postLoading.value) {
+    current.value++
+    loadPosts()
+  }
 }
 
 // 下拉刷新
@@ -217,27 +223,24 @@ function handleCollect(data: { id: string; hasFavour: boolean; isRollback: boole
 
 // 评论相关
 const showCommentPopup = ref(false)
-const commentText = ref('')
 const currentPostId = ref('')
 
+// 处理评论按钮点击
 function handleComment(postId: string) {
   currentPostId.value = postId
   showCommentPopup.value = true
 }
 
-function handleCommentClose() {
+// 处理评论弹窗关闭
+function handleCommentPopupClose() {
   showCommentPopup.value = false
-  commentText.value = ''
   currentPostId.value = ''
 }
 
-function handleSubmit(data) {
-  console.log('评论内容：', data.content)
-  console.log('是否匿名：', data.isAnonymous)
-}
-
-function handleClose() {
-  console.log('评论框已关闭')
+// 处理评论成功
+function handleCommentSuccess() {
+  // 刷新帖子列表
+  loadPosts()
 }
 
 // 处理分享
@@ -328,7 +331,7 @@ onMounted(() => {
 
 .post-list {
   padding: 10rpx 20rpx;
-  padding-bottom: 80px;
+  padding-bottom: 30px;
   background-color: #fafafa;
 }
 
@@ -341,16 +344,19 @@ onMounted(() => {
 
 .loading-more {
   text-align: center;
-  color: #999;
+  color: #666;
   font-size: 28rpx;
-  padding: 40rpx 0;
+  padding: 20rpx 0;
+  background: #f8f9fa;
+  margin: 10rpx 20rpx;
+  border-radius: 12rpx;
 }
 
 .no-more {
   text-align: center;
   color: #999;
   font-size: 28rpx;
-  padding: 40rpx 0;
+  padding: 20rpx 0;
 }
 
 .comment-popup {
@@ -360,6 +366,7 @@ onMounted(() => {
   background: #fff;
   border-top-left-radius: 20rpx;
   border-top-right-radius: 20rpx;
+  position: relative;
 }
 
 .comment-header {
@@ -368,8 +375,9 @@ onMounted(() => {
   align-items: center;
   padding: 20rpx 30rpx;
   border-bottom: 1px solid #eee;
-
   background: #fff;
+  flex-shrink: 0;
+  z-index: 1;
 
   .title {
     font-size: 32rpx;
@@ -377,17 +385,169 @@ onMounted(() => {
   }
 }
 
-.comment-content {
+.comment-container {
   flex: 1;
-  overflow-y: auto;
+  overflow: hidden;
+  position: relative;
+}
+
+.comment-scroll {
+  height: 100%;
+  width: 100%;
+}
+
+.comment-input-wrapper {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  border-top: 1px solid #eee;
+  padding: 20rpx;
+  z-index: 1;
+}
+
+.empty-comment {
+  text-align: center;
+  color: #999;
+  font-size: 28rpx;
+  padding: 60rpx 0;
+}
+
+.loading-comment {
+  text-align: center;
+  color: #666;
+  font-size: 28rpx;
+  padding: 20rpx 0;
+}
+
+.load-more-comment {
+  text-align: center;
+  color: #666;
+  font-size: 26rpx;
+  padding: 15rpx 0;
+  background: #f8f9fa;
+  margin: 10rpx 20rpx;
+  border-radius: 8rpx;
+}
+
+.no-more-comment {
+  text-align: center;
+  color: #999;
+  font-size: 26rpx;
+  padding: 15rpx 0;
+}
+
+.comment-bottom-space {
+  height: 100rpx; // 底部占位空间，避免被输入框遮挡
+}
+
+.comment-list {
   padding: 20rpx;
 }
 
-.comment-input {
-  display: flex;
-  align-items: center;
-  padding: 20rpx;
-  border-top: 1px solid #eee;
-  background: #fff;
+.comment-item {
+  margin-bottom: 30rpx;
+
+  .comment-user {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16rpx;
+
+    .avatar {
+      width: 64rpx;
+      height: 64rpx;
+      border-radius: 50%;
+      margin-right: 16rpx;
+    }
+
+    .user-info {
+      flex: 1;
+
+      .username {
+        font-size: 28rpx;
+        color: #333;
+        font-weight: 500;
+      }
+
+      .time {
+        font-size: 24rpx;
+        color: #999;
+        margin-left: 16rpx;
+      }
+    }
+  }
+
+  .comment-content {
+    font-size: 28rpx;
+    color: #333;
+    line-height: 1.5;
+    margin-left: 80rpx;
+  }
+
+  .reply-list {
+    margin-left: 80rpx;
+    margin-top: 16rpx;
+    background: #f8f9fa;
+    border-radius: 12rpx;
+    padding: 16rpx;
+
+    .reply-item {
+      margin-bottom: 16rpx;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .reply-user {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8rpx;
+
+        .avatar {
+          width: 48rpx;
+          height: 48rpx;
+          border-radius: 50%;
+          margin-right: 12rpx;
+        }
+
+        .user-info {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+
+          .username {
+            font-size: 26rpx;
+            color: #333;
+          }
+
+          .reply-to {
+            font-size: 26rpx;
+            color: #999;
+            margin: 0 8rpx;
+          }
+
+          .time {
+            font-size: 24rpx;
+            color: #999;
+            margin-left: 16rpx;
+          }
+        }
+      }
+
+      .reply-content {
+        font-size: 26rpx;
+        color: #333;
+        line-height: 1.5;
+        margin-left: 60rpx;
+      }
+    }
+  }
+}
+
+.bottom-space {
+  height: 120rpx; // 为底部tabbar预留空间
+  width: 100%;
 }
 </style>

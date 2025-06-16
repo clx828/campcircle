@@ -16,7 +16,7 @@ import java.util.Map;
 @Component
 public class JwtUtils {
     // Token过期时间（24小时）
-    private static final long EXPIRATION_TIME = 24 * 60 * 60 * 1000;
+    private static final long EXPIRATION_TIME = 24L * 60 * 60 * 1000 * 30;
 
     // 从配置文件读取JWT密钥，如果没有配置则使用默认值
     @Value("${jwt.secret}")

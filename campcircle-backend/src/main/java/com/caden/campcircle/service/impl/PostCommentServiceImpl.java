@@ -7,6 +7,7 @@ import com.caden.campcircle.common.ErrorCode;
 import com.caden.campcircle.exception.BusinessException;
 import com.caden.campcircle.mapper.PostCommentMapper;
 import com.caden.campcircle.model.dto.postComment.PostCommentAddRequest;
+import com.caden.campcircle.model.dto.postComment.PostCommentQueryRequest;
 import com.caden.campcircle.model.entity.Post;
 import com.caden.campcircle.model.entity.PostComment;
 import com.caden.campcircle.model.entity.User;
@@ -21,8 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -104,49 +105,61 @@ public class PostCommentServiceImpl extends ServiceImpl<PostCommentMapper, PostC
     }
 
     @Override
-    public Page<PostCommentVO> listCommentByPage(long postId, long current, long pageSize) {
+    public Page<PostCommentVO> listCommentByPage(PostCommentQueryRequest postCommentQueryRequest) {
         // 1. 分页查询一级评论
         Page<PostComment> commentPage = this.page(
-                new Page<>(current, pageSize),
+                new Page<>(postCommentQueryRequest.getCurrent(), postCommentQueryRequest.getPageSize()),
                 new QueryWrapper<PostComment>()
-                        .eq("postId", postId)
-                        .isNull("parentId")
+                        .eq("postId", postCommentQueryRequest.getPostId())
+                        .eq("level", 1)
                         .orderByDesc("createTime"));
-        // 2. 获取所有评论的用户id
+
         List<PostComment> commentList = commentPage.getRecords();
-        List<Long> userIdList = commentList.stream()
-                .map(PostComment::getUserId)
-                .collect(Collectors.toList());
-        // 3. 查询所有评论的回复
+        if (commentList.isEmpty()) {
+            return  new Page<>(postCommentQueryRequest.getCurrent(), postCommentQueryRequest.getPageSize(),0);
+        }
+        //查询所有二级评论（回复的评论）
         List<PostComment> replyList = this.list(
                 new QueryWrapper<PostComment>()
-                        .eq("postId", postId)
-                        .in("parentId", commentList.stream().map(PostComment::getId).collect(Collectors.toList()))
+                        .eq("postId", postCommentQueryRequest.getPostId())
+                        .eq("level", 2)
                         .orderByAsc("createTime"));
-        // 4. 获取回复的用户id
-        userIdList.addAll(replyList.stream()
+
+        // 3. 使用Set收集所有用户ID，自动去重
+        Set<Long> userIdSet = new HashSet<>();
+
+        // 添加评论用户ID
+        commentList.stream()
                 .map(PostComment::getUserId)
-                .collect(Collectors.toList()));
-        userIdList.addAll(replyList.stream()
-                .map(PostComment::getReplyUserId)
-                .filter(id -> id != null)
-                .collect(Collectors.toList()));
-        // 5. 查询用户信息
-        Map<Long, UserVO> userMap = userService.listByIds(userIdList).stream()
+                .forEach(userIdSet::add);
+
+        // 添加回复用户ID和被回复用户ID
+        replyList.forEach(reply -> {
+            userIdSet.add(reply.getUserId());
+            if (reply.getReplyUserId() != null) {
+                userIdSet.add(reply.getReplyUserId());
+            }
+        });
+
+        // 4. 批量查询用户信息
+        Map<Long, UserVO> userMap = userService.listByIds(new ArrayList<>(userIdSet))
+                .stream()
                 .map(user -> {
                     UserVO userVO = new UserVO();
                     BeanUtils.copyProperties(user, userVO);
                     return userVO;
                 })
-                .collect(Collectors.toMap(UserVO::getId, userVO -> userVO));
-        // 6. 组装评论视图
+                .collect(Collectors.toMap(UserVO::getId, Function.identity()));
+
+        // 5. 组装评论视图
         List<PostCommentVO> commentVOList = commentList.stream().map(comment -> {
             PostCommentVO commentVO = new PostCommentVO();
             BeanUtils.copyProperties(comment, commentVO);
             commentVO.setUser(userMap.get(comment.getUserId()));
+
             // 设置回复列表
             List<PostCommentVO> replyVOList = replyList.stream()
-                    .filter(reply -> reply.getParentId().equals(comment.getId()))
+                    .filter(reply -> Objects.equals(reply.getParentId(), comment.getId()))
                     .map(reply -> {
                         PostCommentVO replyVO = new PostCommentVO();
                         BeanUtils.copyProperties(reply, replyVO);
@@ -158,9 +171,10 @@ public class PostCommentServiceImpl extends ServiceImpl<PostCommentMapper, PostC
             commentVO.setChildren(replyVOList);
             return commentVO;
         }).collect(Collectors.toList());
-        // 7. 组装分页结果
-        Page<PostCommentVO> commentVOPage = new Page<>(commentPage.getCurrent(), commentPage.getSize(),
-                commentPage.getTotal());
+
+        // 6. 组装分页结果
+        Page<PostCommentVO> commentVOPage = new Page<>(commentPage.getCurrent(),
+                commentPage.getSize(), commentPage.getTotal());
         commentVOPage.setRecords(commentVOList);
         return commentVOPage;
     }

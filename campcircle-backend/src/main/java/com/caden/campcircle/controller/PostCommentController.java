@@ -6,6 +6,7 @@ import com.caden.campcircle.common.ErrorCode;
 import com.caden.campcircle.common.ResultUtils;
 import com.caden.campcircle.exception.BusinessException;
 import com.caden.campcircle.model.dto.postComment.PostCommentAddRequest;
+import com.caden.campcircle.model.dto.postComment.PostCommentQueryRequest;
 import com.caden.campcircle.model.entity.PostComment;
 import com.caden.campcircle.model.entity.User;
 import com.caden.campcircle.model.vo.PostCommentVO;
@@ -68,18 +69,18 @@ public class PostCommentController {
 
     /**
      * 分页获取评论列表
-     *
-     * @param postId   帖子id
-     * @param current  当前页码
-     * @param pageSize 每页条数
+     * @param postCommentQueryRequest
      * @return
      */
+    /**
+     * 分页获取评论列表
+     */
     @GetMapping("/list")
-    public BaseResponse<Page<PostCommentVO>> listCommentByPage(long postId, long current, long pageSize) {
-        if (postId <= 0) {
+    public BaseResponse<Page<PostCommentVO>> listCommentByPage(PostCommentQueryRequest postCommentQueryRequest) {
+        if (postCommentQueryRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        Page<PostCommentVO> commentVOPage = postCommentService.listCommentByPage(postId, current, pageSize);
+        Page<PostCommentVO> commentVOPage = postCommentService.listCommentByPage(postCommentQueryRequest);
         return ResultUtils.success(commentVOPage);
     }
 }
