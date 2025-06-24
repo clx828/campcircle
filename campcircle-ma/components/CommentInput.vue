@@ -130,10 +130,12 @@ watch(showPopup, (newVal) => {
 // 监听键盘高度变化
 onMounted(() => {
     // 获取系统信息
-    const systemInfo = uni.getSystemInfoSync()
-    safeAreaBottom.value = systemInfo.safeAreaInsets?.bottom || 0
+    const windowInfo = uni.getWindowInfo()
+    const deviceInfo = uni.getDeviceInfo()
+    safeAreaBottom.value = windowInfo.safeAreaInsets?.bottom || 0
 
-    console.log('系统信息:', systemInfo)
+    console.log('窗口信息:', windowInfo)
+    console.log('设备信息:', deviceInfo)
     console.log('安全区域底部:', safeAreaBottom.value)
 
     // 监听键盘高度变化

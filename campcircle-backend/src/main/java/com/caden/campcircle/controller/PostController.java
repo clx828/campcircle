@@ -16,6 +16,7 @@ import com.caden.campcircle.model.dto.post.PostQueryRequest;
 import com.caden.campcircle.model.dto.post.PostUpdateRequest;
 import com.caden.campcircle.model.entity.Post;
 import com.caden.campcircle.model.entity.User;
+import com.caden.campcircle.model.vo.MyPostNumVO;
 import com.caden.campcircle.model.vo.PostVO;
 import com.caden.campcircle.service.PostService;
 import com.caden.campcircle.service.UserService;
@@ -196,7 +197,7 @@ public class PostController {
      */
     @PostMapping("/my/list/page/vo")
     public BaseResponse<Page<PostVO>> listMyPostVOByPage(@RequestBody PostQueryRequest postQueryRequest,
-            HttpServletRequest request) {
+                                                         HttpServletRequest request) {
         if (postQueryRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -262,5 +263,16 @@ public class PostController {
         boolean result = postService.updateById(post);
         return ResultUtils.success(result);
     }
+
+    @GetMapping("/get/my/postNum")
+    public BaseResponse<MyPostNumVO> getMyPostNum( HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        if (loginUser == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        MyPostNumVO postNum = postService.getMyPostNum(loginUser.getId());
+        return ResultUtils.success(postNum);
+    }
+
 
 }

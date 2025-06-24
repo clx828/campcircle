@@ -1,6 +1,7 @@
 package com.caden.campcircle.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caden.campcircle.common.ErrorCode;
 import com.caden.campcircle.exception.BusinessException;
@@ -95,6 +96,14 @@ public class PostThumbServiceImpl extends ServiceImpl<PostThumbMapper, PostThumb
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR);
             }
         }
+    }
+
+    @Override
+    public Page<Post> listThumbPostByPage(Page<Post> page, QueryWrapper<Post> queryWrapper, Long thUmbUserId) {
+        if (thUmbUserId <= 0) {
+            return new Page<>();
+        }
+        return baseMapper.listThumbPostByPage(page, queryWrapper, thUmbUserId);
     }
 
 }

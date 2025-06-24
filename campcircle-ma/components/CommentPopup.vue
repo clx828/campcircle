@@ -1,20 +1,23 @@
 <template>
-    <wd-popup :z-index="9999" v-model="show" position="bottom" closable custom-style="height: 500px;"
-        @close="handleClose">
-        <view class="comment-popup">
-            <view class="comment-header">
-                <text class="title">评论</text>
-            </view>
-            <view class="comment-container">
-                <CommentList :comment-list="commentList" @reply="handleReply" />
-            </view>
-            <view class="comment-input-wrapper">
-                <CommentInput :placeholder="replyTo ? `回复 ${replyTo.userName}` : '说点什么...'" :reply-to="replyTo"
-                    :show="showCommentInput" @update:show="showCommentInput = $event" @submit="handleSubmit"
-                    @close="handleClose" />
+    <view v-if="show" class="custom-popup">
+        <view class="popup-mask" @click="handleClose"></view>
+        <view class="popup-content">
+            <view class="comment-popup">
+                <view class="comment-header">
+                    <text class="title">评论</text>
+                    <text class="close-btn" @click="handleClose">×</text>
+                </view>
+                <view class="comment-container">
+                    <CommentList :comment-list="commentList" @reply="handleReply" />
+                </view>
+                <view class="comment-input-wrapper">
+                    <CommentInput :placeholder="replyTo ? `回复 ${replyTo.userName}` : '说点什么...'" :reply-to="replyTo"
+                        :show="showCommentInput" @update:show="showCommentInput = $event" @submit="handleSubmit"
+                        @close="handleClose" />
+                </view>
             </view>
         </view>
-    </wd-popup>
+    </view>
 </template>
 
 <script setup lang="ts">
@@ -130,25 +133,55 @@ async function handleSubmit(data: { content: string; isAnonymous: boolean }) {
 }
 
 function handleClose() {
+    // First emit the update event to change the show prop
     emit('update:show', false)
+    // Then emit the close event
     emit('close')
-    // 重置状态
+    // Reset state
     commentList.value = []
     commentCurrent.value = 1
     replyTo.value = null
     parentComment.value = null
-    // showCommentInput.value = false
+    showCommentInput.value = false
 }
 </script>
 
 <style lang="scss" scoped>
+.custom-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+}
+
+.popup-mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.popup-content {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    transform: translateY(0);
+    transition: transform 0.3s ease-out;
+    border-top-left-radius: 20rpx;
+    border-top-right-radius: 20rpx;
+    overflow: hidden;
+}
+
 .comment-popup {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    height: 500px;
     background: #fff;
-    border-top-left-radius: 20rpx;
-    border-top-right-radius: 20rpx;
     position: relative;
 }
 
@@ -166,12 +199,19 @@ function handleClose() {
         font-size: 32rpx;
         font-weight: bold;
     }
+
+    .close-btn {
+        font-size: 40rpx;
+        color: #999;
+        padding: 0 20rpx;
+    }
 }
 
 .comment-container {
     flex: 1;
-    overflow: hidden;
+    overflow-y: auto;
     position: relative;
+    -webkit-overflow-scrolling: touch;
 }
 
 .comment-input-wrapper {

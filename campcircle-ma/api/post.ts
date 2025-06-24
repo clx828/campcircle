@@ -8,38 +8,24 @@ export interface addPostParams {
 }
 // 分页查询帖子列表
 export interface ListPostVOByPageParams {
-
     content?: string;
-
-    // 当前页码,默认1
     current?: number;
-
-
     favourUserId?: number;
-
-
     id?: number;
-
     notId?: number;
-
     orTags?: Record<string, unknown>[];
-
-    // 每页条数,默认10
     pageSize?: number;
-
-
     searchText?: string;
-
-
     sortField?: string;
-
-
     sortOrder?: string;
-
     tags?: Record<string, unknown>[];
-
-
     userId?: number;
+}
+
+// 获取我的帖子列表参数
+export interface ListMyPostVOByPageParams {
+    current?: number;
+    pageSize?: number;
 }
 
 //点赞参数接口
@@ -80,5 +66,20 @@ export const postApi = {
 
     listPostVOByPage(listPostVOByPageParams: ListPostVOByPageParams) {
         return request.post('/post/list/page/vo', listPostVOByPageParams)
+    },
+
+    listMyPostVOByPage(listMyPostVOByPageParams: ListMyPostVOByPageParams) {
+        return request.post('/post/my/list/page/vo', listMyPostVOByPageParams)
+    },
+
+    listMyFavourPostVOByPage(listMyPostVOByPageParams: ListMyPostVOByPageParams) {
+        return request.post('/post_favour/my/list/page', listMyPostVOByPageParams)
+    },
+
+    listMyThumbPostVOByPage(listMyPostVOByPageParams: ListMyPostVOByPageParams) {
+        return request.post('/post_thumb/my/list/page', listMyPostVOByPageParams)
+    },
+    getMyPostNum() {
+        return request.get('/post/get/my/postNum')
     }
 }

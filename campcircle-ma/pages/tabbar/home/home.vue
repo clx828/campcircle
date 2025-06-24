@@ -259,6 +259,19 @@ function handleFollow(data: { id: string; hasFollow: boolean; isRollback: boolea
   }
 }
 
+const fetchLikePosts = async () => {
+  try {
+    postLoading.value = true
+    // TODO: 等待后端实现喜欢列表接口
+    postList.value = []
+    hasMore.value = true
+  } catch (error) {
+    console.error('获取喜欢列表失败:', error)
+  } finally {
+    postLoading.value = false
+  }
+}
+
 onMounted(() => {
   getSystemInfo()
   loadPosts()

@@ -55,21 +55,16 @@
 			}
 		},
 		{
-			"path": "pages/tabbar-3-detial/tabbar-3-release/tabbar-3-release",
-			"style": {}
-		},
-		{
-			"path": "pages/tabbar-3-detial/tabbar-3-video/tabbar-3-video",
-			"style": {}
-		},
-		{
-			"path": "pages/tabbar-3-detial/tabbar-3-qa/tabbar-3-qa",
-			"style": {}
-		},
-		{
 			"path": "pages/favorites/favorites",
 			"style": {
 				"navigationBarTitleText": "我的收藏",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/followList/followList",
+			"style": {
+				"navigationStyle": "custom",
 				"enablePullDownRefresh": true
 			}
 		}

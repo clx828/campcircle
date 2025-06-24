@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caden.campcircle.common.ErrorCode;
 import com.caden.campcircle.constant.CommonConstant;
+import com.caden.campcircle.constant.UserConstant;
 import com.caden.campcircle.exception.BusinessException;
 import com.caden.campcircle.exception.ThrowUtils;
 import com.caden.campcircle.mapper.FollowMapper;
@@ -15,6 +16,7 @@ import com.caden.campcircle.mapper.PostThumbMapper;
 import com.caden.campcircle.model.dto.post.PostEsDTO;
 import com.caden.campcircle.model.dto.post.PostQueryRequest;
 import com.caden.campcircle.model.entity.*;
+import com.caden.campcircle.model.vo.MyPostNumVO;
 import com.caden.campcircle.model.vo.PostVO;
 import com.caden.campcircle.model.vo.UserVO;
 import com.caden.campcircle.service.PictureService;
@@ -23,6 +25,8 @@ import com.caden.campcircle.service.UserService;
 import com.caden.campcircle.utils.SqlUtils;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -41,6 +45,7 @@ import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 /**
@@ -69,6 +74,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
     @Resource
     private PictureService pictureService;
+
+    @Resource
+    private RedisTemplate<String, String> redisTemplate;
 
     @Override
     public void validPost(Post post, boolean add) {
@@ -322,6 +330,40 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }).collect(Collectors.toList());
         postVOPage.setRecords(postVOList);
         return postVOPage;
+    }
+
+    @Override
+    public MyPostNumVO getMyPostNum(Long id) {
+        if (id == null || id <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        String ownKey = UserConstant.OWN_POST_NUM_KEY_PREFIX + id;
+        String favourKey = UserConstant.FAVOUR_POST_NUM_KEY_PREFIX + id;
+        String thumbKey = UserConstant.THUMB_POST_NUM_KEY_PREFIX + id;
+        MyPostNumVO myPostNumVO = new MyPostNumVO();
+        // 获取各类统计值（如果没有缓存，则查库并写入缓存）
+        myPostNumVO.setOwnPostNum(getOrCacheCount(ownKey, () ->
+                this.count(new QueryWrapper<Post>().eq("userId", id))));
+
+        myPostNumVO.setFavourPostNum(getOrCacheCount(favourKey, () ->
+                postFavourMapper.selectCount(new QueryWrapper<PostFavour>().eq("userId", id))));
+
+        myPostNumVO.setThumbPostNum(getOrCacheCount(thumbKey, () ->
+                postThumbMapper.selectCount(new QueryWrapper<PostThumb>().eq("userId", id))));
+
+        return myPostNumVO;
+    }
+
+    private Long getOrCacheCount(String redisKey, Supplier<Long> dbQuery) {
+        String cached = redisTemplate.opsForValue().get(redisKey);
+        if (cached != null) {
+            return Long.parseLong(cached);
+        }
+        Long count = dbQuery.get();
+        // 设置 8 到 10 分钟之间的随机过期时间（单位：秒）
+        int expireSeconds = 480 + new Random().nextInt(121); // 480~600 秒
+        redisTemplate.opsForValue().set(redisKey, String.valueOf(count), expireSeconds, TimeUnit.SECONDS);
+        return count;
     }
 
 }

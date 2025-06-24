@@ -1,19 +1,28 @@
 package com.caden.campcircle.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caden.campcircle.common.ErrorCode;
 import com.caden.campcircle.exception.BusinessException;
 import com.caden.campcircle.mapper.FollowMapper;
 import com.caden.campcircle.model.entity.Follow;
 import com.caden.campcircle.model.entity.PostFavour;
+import com.caden.campcircle.model.entity.PostThumb;
 import com.caden.campcircle.model.entity.User;
+import com.caden.campcircle.model.vo.FansVO;
+import com.caden.campcircle.model.vo.FollowNum;
+import com.caden.campcircle.model.vo.FollowVO;
 import com.caden.campcircle.service.FollowService;
+import com.caden.campcircle.service.PostThumbService;
 import com.caden.campcircle.service.UserService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 关注服务实现
@@ -24,6 +33,8 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
 
     @Resource
     private UserService userService;
+    @Resource
+    private PostThumbService postThumbService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -113,5 +124,46 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
         queryWrapper.eq("userId", userId)
                 .eq("followUserId", followUserId);
         return this.count(queryWrapper) > 0;
+    }
+
+    @Override
+    public Page<FollowVO> getListFollowVO(Page<Follow> page, long userId) {
+        List<Follow> myFansList = this.list(new QueryWrapper<Follow>().eq("followUserId", userId));
+        List<FollowVO> followVOList = page.getRecords().stream().map(follow -> {
+            FollowVO followVO = new FollowVO();
+            BeanUtils.copyProperties(follow, followVO);
+            followVO.setIsMutual(myFansList.stream().anyMatch(myFan -> myFan.getUserId().equals(follow.getFollowUserId())));
+            followVO.setFollowUserVO(userService.getUserVO(userService.getById(follow.getFollowUserId())));
+            return followVO;
+        }).collect(Collectors.toList());
+        Page<FollowVO> followVOPage = new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
+        followVOPage.setRecords(followVOList);
+        return followVOPage;
+    }
+
+    @Override
+    public Page<FansVO> getListFansVO(Page<Follow> page, long userId) {
+        List<Follow> myFollowList = this.list(new QueryWrapper<Follow>().eq("userId", userId));
+        List<FansVO> fansVOList = page.getRecords().stream().map(fans -> {
+            FansVO fansVO = new FansVO();
+            BeanUtils.copyProperties(fans, fansVO);
+            fansVO.setFansUserId(fans.getUserId());
+            fansVO.setUserId(fans.getFollowUserId());
+            fansVO.setIsMutual(myFollowList.stream().anyMatch(myFollow -> myFollow.getFollowUserId().equals(fans.getUserId())));
+            fansVO.setFansUserVO(userService.getUserVO(userService.getById(fans.getUserId())));
+            return fansVO;
+        }).collect(Collectors.toList());
+        Page<FansVO> fansVOPage = new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
+        fansVOPage.setRecords(fansVOList);
+        return fansVOPage;
+    }
+
+    @Override
+    public FollowNum getFollowNum(Long id) {
+        FollowNum followNum = new FollowNum();
+        followNum.setFollowNum(this.count(new QueryWrapper<Follow>().eq("userId", id)));
+        followNum.setFansNum(this.count(new QueryWrapper<Follow>().eq("followUserId", id)));
+        followNum.setThumbNum(postThumbService.count(new QueryWrapper<PostThumb>().eq("userId", id)));
+        return followNum;
     }
 }

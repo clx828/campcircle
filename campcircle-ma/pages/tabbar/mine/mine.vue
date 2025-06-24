@@ -4,8 +4,9 @@
     <image :src="userInfo.userAvatar" class="fixed-avatar"></image>
   </view>
 
-  <scroll-view class="profile-page" scroll-y="true" @scroll="onScrollThrottled" refresher-enabled="true"
-    :refresher-triggered="refresherTriggered" @refresherrefresh="onRefresh" refresher-background="#ffffff">
+  <scroll-view class="profile-page" scroll-y="true" @scroll="onScrollThrottled" @scrolltolower="loadMore"
+    refresher-enabled="true" :refresher-triggered="refresherTriggered" @refresherrefresh="onRefresh"
+    refresher-background="#ffffff">
     <!-- 用户信息区域 -->
     <view class="user-header">
       <view class="user-header__overlay">
@@ -28,21 +29,21 @@
           <wd-row>
             <!-- 统计数据 -->
             <wd-col :span="4">
-              <view class="stat-item">
-                <view class="stat-number">1</view>
+              <view class="stat-item" @click="goToFollowList">
+                <view class="stat-number">{{ followNum }}</view>
                 <view class="stat-label">关注</view>
               </view>
             </wd-col>
             <wd-col :span="4">
-              <view class="stat-item">
-                <view class="stat-number">0</view>
+              <view class="stat-item" @click="goToFansList">
+                <view class="stat-number">{{ fansNum }}</view>
                 <view class="stat-label">粉丝</view>
               </view>
             </wd-col>
             <wd-col :span="4">
-              <view class="stat-item">
-                <view class="stat-number">0</view>
-                <view class="stat-label">被喜欢</view>
+              <view class="stat-item" @click="showThumbModal">
+                <view class="stat-number">{{ thumbNum2 }}</view>
+                <view class="stat-label">获赞</view>
               </view>
             </wd-col>
 
@@ -64,97 +65,244 @@
     <view class="content-section">
       <view class="content-tabs">
         <wd-tabs v-model="tab">
-          <wd-tab title="笔记 0">
+          <wd-tab :title="`笔记 ${ownPostNum}`">
           </wd-tab>
-          <wd-tab title="收藏 0">
+          <wd-tab :title="`收藏 ${favourPostNum}`">
           </wd-tab>
-          <wd-tab title="喜欢 0">
+          <wd-tab :title="`喜欢 ${thumbPostNum}`">
           </wd-tab>
         </wd-tabs>
       </view>
       <view class="tab-content" :class="{ 'tab-content--empty': cardList.length === 0 }">
-        <SocialCard v-for="(item, i) in cardList" :key="i" :avatar="item.avatar" :nickname="item.nickname"
-          :time="item.time" :content="item.content" :images="item.images" />
-        <EmptyState text="暂无内容" v-if="cardList.length === 0" />
+        <SocialCard :cardInfo="item" v-for="(item, i) in cardList" :key="i" />
+        <EmptyState text="暂无内容" v-if="cardList.length === 0 && !loading" />
+        <view v-if="loading" class="loading-state">
+          <wd-loading />
+        </view>
+        <view v-if="!hasMore && cardList.length > 0" class="no-more-state">
+          <text class="no-more-text">没有更多了</text>
+        </view>
       </view>
     </view>
 
   </scroll-view>
+
+  <!-- 获赞弹窗 -->
+  <wd-popup v-model="showThumb" position="center" :close-on-click-modal="false" custom-style="">
+    <view class="thumb-modal">
+      <view class="thumb-image">
+        <image src="/static/img/thumbBg.png" mode="widthFix" class="bg-image" />
+      </view>
+      <view class="thumb-content">
+        <text class="thumb-text">"{{ userInfo.userName }}" 共获得 {{ thumbNum2 }} 个赞</text>
+      </view>
+      <view class="thumb-actions">
+        <button class="thumb-button" @click="closeThumbModal">确认</button>
+      </view>
+    </view>
+  </wd-popup>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { reactive, ref, onMounted, watch } from 'vue'
 import { useUserStore } from '@/stores/userStore'
 import { IUser } from '@/model/user'
 import AvatarUpload from '@/components/AvatarUpload.vue'
-
 import SocialCard from '@/components/SocialCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import { postApi } from '@/api/post'
+import { followApi } from '@/api/follow'
+import { useRouter } from 'vue-router'
 
-const cardList = [
-  {
-    avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-    nickname: '小明',
-    time: '1分钟前',
-    content: '今天的天气真不错，适合出去玩！',
-    images: ['https://picsum.photos/400/300']
-  },
-  {
-    avatar: 'https://randomuser.me/api/portraits/women/45.jpg',
-    nickname: '小红',
-    time: '5分钟前',
-    content: '分享一下我的美食照片！',
-    images: ['https://picsum.photos/300/300', 'https://picsum.photos/301/301']
-  },
-  {
-    avatar: 'https://randomuser.me/api/portraits/men/12.jpg',
-    nickname: '老王',
-    time: '10分钟前',
-    content: '三张图片测试，看看排版效果如何。',
-    images: [
-      'https://picsum.photos/200/200',
-      'https://picsum.photos/201/201',
-      'https://picsum.photos/202/202'
-    ]
-  },
-  {
-    avatar: 'https://randomuser.me/api/portraits/women/22.jpg',
-    nickname: '小美',
-    time: '20分钟前',
-    content: '多图测试，最多一排三个。',
-    images: [
-      'https://picsum.photos/210/210',
-      'https://picsum.photos/211/211',
-      'https://picsum.photos/212/212',
-      'https://picsum.photos/213/213'
-    ]
+// ===== 响应式数据 =====
+const tab = ref<number>(0)
+const cardList = ref<any[]>([])
+const loading = ref(false)
+const current = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
+const hasMore = ref(true) // 是否还有更多数据
+const ownPostNum = ref(0)
+const favourPostNum = ref(0)
+const thumbPostNum = ref(0)
+const followNum = ref(0)
+const fansNum = ref(0)
+const thumbNum2 = ref(0) // 避免与已有 thumbPostNum 冲突
+
+// 获取帖子数量
+const fetchPostNums = async () => {
+  try {
+    const res = await postApi.getMyPostNum()
+    if (res.code === 0 && res.data) {
+      ownPostNum.value = res.data.ownPostNum
+      favourPostNum.value = res.data.favourPostNum
+      thumbPostNum.value = res.data.thumbPostNum
+    }
+  } catch (error) {
+    console.error('获取帖子数量失败:', error)
   }
-]
+}
 
-// ===== 下拉刷新相关 =====
-const refresherTriggered = ref(false)
+// 获取关注/粉丝/被喜欢数
+const fetchFollowNums = async () => {
+  try {
+    const res = await followApi.getMyFollowNum()
+    if (res.code === 0 && res.data) {
+      followNum.value = Number(res.data.followNum)
+      fansNum.value = Number(res.data.fansNum)
+      thumbNum2.value = Number(res.data.thumbNum)
+    }
+  } catch (error) {
+    console.error('获取关注/粉丝/被喜欢数失败:', error)
+  }
+}
 
+// 获取笔记列表
+const fetchMyPosts = async (isLoadMore = false) => {
+  console.log('fetchMyPosts')
+  try {
+    loading.value = true
+    const res = await postApi.listMyPostVOByPage({
+      current: current.value,
+      pageSize: pageSize.value
+    })
+    if (res.code === 0) {
+      if (isLoadMore) {
+        cardList.value = [...cardList.value, ...res.data.records]
+      } else {
+        cardList.value = res.data.records
+      }
+      total.value = res.data.total
+      hasMore.value = cardList.value.length < res.data.total
+    }
+  } catch (error) {
+    console.error('获取笔记列表失败:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 获取收藏列表
+const fetchFavourPosts = async (isLoadMore = false) => {
+  try {
+    loading.value = true
+    const res = await postApi.listMyFavourPostVOByPage({
+      current: current.value,
+      pageSize: pageSize.value
+    })
+    if (res.code === 0) {
+      if (isLoadMore) {
+        cardList.value = [...cardList.value, ...res.data.records]
+      } else {
+        cardList.value = res.data.records
+      }
+      total.value = res.data.total
+      hasMore.value = cardList.value.length < res.data.total
+    }
+  } catch (error) {
+    console.error('获取收藏列表失败:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 获取喜欢列表
+const fetchLikePosts = async (isLoadMore = false) => {
+  try {
+    loading.value = true
+    const res = await postApi.listMyThumbPostVOByPage({
+      current: current.value,
+      pageSize: pageSize.value
+    })
+    if (res.code === 0) {
+      if (isLoadMore) {
+        cardList.value = [...cardList.value, ...res.data.records]
+      } else {
+        cardList.value = res.data.records
+      }
+      total.value = res.data.total
+      hasMore.value = cardList.value.length < res.data.total
+    }
+  } catch (error) {
+    console.error('获取喜欢列表失败:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 加载更多数据
+const loadMore = async () => {
+  if (loading.value || !hasMore.value) return
+
+  current.value++
+  switch (tab.value) {
+    case 0: // 笔记
+      await fetchMyPosts(true)
+      break
+    case 1: // 收藏
+      await fetchFavourPosts(true)
+      break
+    case 2: // 喜欢
+      await fetchLikePosts(true)
+      break
+  }
+}
+
+// 监听tab变化
+watch(tab, (newTab) => {
+  uni.vibrateShort()
+  current.value = 1
+  cardList.value = []
+  hasMore.value = true
+  switch (newTab) {
+    case 0: // 笔记
+      fetchMyPosts()
+      break
+    case 1: // 收藏
+      fetchFavourPosts()
+      break
+    case 2: // 喜欢
+      fetchLikePosts()
+      break
+  }
+})
+
+// 下拉刷新
 const onRefresh = async () => {
   refresherTriggered.value = true
-
   try {
-    // 模拟刷新数据的异步操作
-    await new Promise(resolve => setTimeout(resolve, 1500))
-
-    // 这里可以添加实际的数据刷新逻辑
-    // 例如重新获取用户信息、重新加载内容列表等
-    console.log('刷新数据...')
-
-    // 可以在这里调用实际的API
-    // await fetchUserInfo()
-    // await fetchContentList()
-
+    current.value = 1
+    hasMore.value = true
+    await fetchPostNums()
+    await fetchFollowNums()
+    switch (tab.value) {
+      case 0:
+        await fetchMyPosts()
+        break
+      case 1:
+        await fetchFavourPosts()
+        break
+      case 2:
+        await fetchLikePosts()
+        break
+    }
   } catch (error) {
     console.error('刷新失败:', error)
   } finally {
     refresherTriggered.value = false
   }
 }
+
+// 页面加载时获取数据
+onMounted(() => {
+  fetchMyPosts()
+  fetchPostNums()
+  fetchFollowNums()
+
+})
+
+// ===== 下拉刷新相关 =====
+const refresherTriggered = ref(false)
 
 // ===== 滚动监听相关 =====
 const isAtTop = ref(true) // 是否在顶部
@@ -188,15 +336,14 @@ const onScroll = (e: any) => {
 const onScrollThrottled = throttle(onScroll, 16)
 
 const handleAvatarChange = (file: any) => {
+  uni.vibrateShort()
   console.log("头像变更：", file)
 }
 
 // ===== 响应式数据 =====
-const tab = ref<number>(0)
-
 let userInfo: IUser = reactive({
   id: 10001,
-  userName: '微信用户_10001',
+  userName: '未登录',
   userAvatar: 'https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/public/1898735003367223297/2025-05-11_2f217692-cb17-4c64-8bcb-8afd1ed14b5a.webp',
   userProfile: '这个人很懒，还没有简介',
   userRole: 'user',
@@ -205,6 +352,30 @@ let userInfo: IUser = reactive({
 const userStore = useUserStore()
 userInfo = {
   ...userStore.getUserInfo
+}
+
+const router = useRouter()
+
+const goToFollowList = () => {
+  uni.vibrateShort()
+  uni.navigateTo({ url: '/pages/followList/followList?type=follow' })
+}
+
+const goToFansList = () => {
+  uni.vibrateShort()
+  uni.navigateTo({ url: '/pages/followList/followList?type=fans' })
+}
+
+const showThumb = ref(false)
+
+const showThumbModal = () => {
+  uni.vibrateShort()
+  showThumb.value = true
+}
+
+const closeThumbModal = () => {
+  uni.vibrateShort()
+  showThumb.value = false
 }
 </script>
 
@@ -378,26 +549,123 @@ userInfo = {
 
 // ===== 标签页内容 =====
 .tab-content {
-  padding: 15px;
-  background-color: #fafafa;
-  // 精确计算剩余空间高度：63vh - padding-top - tabs高度
-  min-height: calc(63vh - 8px - 42px);
+  padding: 20rpx;
+  padding-top: 0;
+  min-height: 200rpx;
 
   &--empty {
-    // 当内容为空时，确保背景能够完全覆盖且不产生滚动
-    min-height: calc(63vh - 8px - 42px);
     display: flex;
-    align-items: center;
     justify-content: center;
-    box-sizing: border-box; // 确保padding不会增加额外高度
+    align-items: center;
+    min-height: 400rpx;
+  }
+}
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20rpx;
+}
+
+.no-more-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20rpx;
+}
+
+.no-more-text {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+//======共获得点赞数======
+.thumb-modal {
+  width: 290px;
+  height: 280px;
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.thumb-image {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #f5f5f5;
+
+  .bg-image {
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+  }
+}
+
+.thumb-content {
+  padding: 24px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+
+  .thumb-text {
+    font-size: 16px;
+    font-weight: 500;
+    color: #333333;
+    text-align: center;
+    line-height: 1.4;
+  }
+}
+
+.thumb-actions {
+  padding: 0;
+  background: #ffffff;
+  margin-top: 20px;
+
+  .thumb-button {
+    width: 100%;
+    height: 44px;
+    background: transparent;
+    border: none;
+    font-size: 16px;
+    color: #333333;
+    font-weight: 500;
+    font-weight: bold;
+    padding: 0;
+    margin: 0;
+    line-height: 44px;
+    text-align: center;
+
+    &:active {
+      opacity: 0.7;
+    }
+  }
+}
+
+/* 如果需要更紧凑的布局 */
+.thumb-modal.compact {
+  height: 320px;
+
+  .thumb-content {
+    padding: 20px;
   }
 
-  .content-item {
-    padding: 15px;
-    margin-bottom: 10px;
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  .thumb-actions {
+    margin-top: 16px;
+    margin-bottom: 12px;
+  }
+}
+
+/* 如果需要调整图片占比 */
+.thumb-modal.image-larger {
+  .thumb-image {
+    flex: 1.5;
   }
 }
 </style>

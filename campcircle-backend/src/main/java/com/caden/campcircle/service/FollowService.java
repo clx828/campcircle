@@ -1,7 +1,11 @@
 package com.caden.campcircle.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.caden.campcircle.model.entity.Follow;
+import com.caden.campcircle.model.vo.FansVO;
+import com.caden.campcircle.model.vo.FollowNum;
+import com.caden.campcircle.model.vo.FollowVO;
 
 /**
  * 关注服务
@@ -35,4 +39,28 @@ public interface FollowService extends IService<Follow> {
      * @return 是否已关注
      */
     boolean hasFollow(long userId, long followUserId);
+
+    /**
+     * 获取关注列表
+     *
+     * @param userId 当前用户id
+     * @return 关注列表
+     */
+    Page<FollowVO> getListFollowVO(Page<Follow> page,long userId);
+
+    /**
+     * 获取粉丝列表
+     *
+     * @param userId 当前用户id
+     * @return 粉丝列表
+     */
+    Page<FansVO> getListFansVO(Page<Follow> page, long userId);
+
+    /**
+     * 获取用户关注数、粉丝数、获赞数
+     *
+     * @param id 用户id
+     * @return 用户关注数、粉丝数、获赞数
+     */
+    FollowNum getFollowNum(Long id);
 }

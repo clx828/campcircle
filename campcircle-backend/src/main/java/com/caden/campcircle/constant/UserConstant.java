@@ -29,5 +29,18 @@ public interface UserConstant {
      */
     String BAN_ROLE = "ban";
 
-    // endregion
+    /**
+     * 我的帖子数量key前缀
+     */
+    String OWN_POST_NUM_KEY_PREFIX = "user:own_post_num:";
+
+    /**
+     * 我的收藏帖子数量key前缀
+     */
+    String FAVOUR_POST_NUM_KEY_PREFIX = "user:favour_post_num:";
+
+    /**
+     * 我的点赞帖子数量key前缀
+     */
+    String THUMB_POST_NUM_KEY_PREFIX = "user:thumb_post_num:";
 }

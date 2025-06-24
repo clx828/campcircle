@@ -18,4 +18,10 @@
         id,postId,
         userId,createTime,updateTime
     </sql>
+    <select id="listThumbPostByPage" resultType="com.caden.campcircle.model.entity.Post">
+        select p.*
+        from post p
+                 join (select postId from post_thumb where userId = #{thumbUserId}) pt
+                      on p.id = pt.postId ${ew.customSqlSegment}
+    </select>
 </mapper>

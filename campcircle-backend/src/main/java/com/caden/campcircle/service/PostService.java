@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.caden.campcircle.model.dto.post.PostQueryRequest;
 import com.caden.campcircle.model.entity.Post;
+import com.caden.campcircle.model.vo.MyPostNumVO;
 import com.caden.campcircle.model.vo.PostVO;
 import javax.servlet.http.HttpServletRequest;
 
@@ -56,4 +57,6 @@ public interface PostService extends IService<Post> {
      * @return
      */
     Page<PostVO> getPostVOPage(Page<Post> postPage, HttpServletRequest request);
+
+    MyPostNumVO getMyPostNum(Long id);
 }

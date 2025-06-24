@@ -47,6 +47,11 @@ public class PostVO implements Serializable {
     private Integer commentNum;
 
     /**
+     * 浏览数
+     */
+    private Integer viewNum;
+
+    /**
      * 创建用户 id
      */
     private Long userId;
@@ -70,6 +75,7 @@ public class PostVO implements Serializable {
      * 创建人信息
      */
     private UserVO user;
+
 
     /**
      * 是否已点赞
