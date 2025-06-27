@@ -70,6 +70,7 @@ import Publish from '/pages/tabbar/release/release.vue'
 import Info from '/pages/tabbar/info/info.vue'
 import Mine from '/pages/tabbar/mine/mine.vue'
 import { useUserStore } from '@/stores/userStore'
+import { onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app'
 
 
 const activeTab = ref(0)
@@ -121,6 +122,25 @@ const checkAuth = () => {
 
   return isLoggedIn
 }
+
+// 配置小程序分享功能
+onShareAppMessage(() => {
+  console.log('主页面分享给朋友事件触发了')
+  return {
+    title: 'CampCircle - 校园社交平台',
+    path: '/pages/layout/layout',
+    imageUrl: 'https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png'
+  }
+})
+
+onShareTimeline(() => {
+  console.log('主页面分享到朋友圈事件触发了')
+  return {
+    title: 'CampCircle - 发现校园精彩生活',
+    query: 'from=timeline',
+    imageUrl: 'https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png'
+  }
+})
 
 </script>
 

@@ -4,26 +4,26 @@
     <view class="search-container" :style="headerStyle">
       <view class="logo" :style="logoStyle">
         <image
-          src="https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png" />
+            src="https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png" />
       </view>
       <view class="search-bar" :style="searchBarStyle">
-        <image src="/static/button/shousuo.png" mode="aspectFit" />
-        <span>搜索</span>
+        <image src="/static/button/shousuo.png" mode="aspectFit" class="search-bar-img" />
+        <span class="search-bar-span">搜索</span>
       </view>
       <view class="placeholder"></view>
     </view>
 
     <!-- 可滚动的内容区域 -->
     <scroll-view scroll-y class="scroll-view" refresher-enabled :refresher-triggered="refresherTriggered"
-      @refresherrefresh="onRefresh" @scrolltolower="onScrollToLower"
-      :style="{ height: `calc(100vh - ${menuButtonHeight + statusBarHeight}px - 60px)` }">
+                 @refresherrefresh="onRefresh" @scrolltolower="onScrollToLower"
+                 :style="{ height: `calc(100vh - ${menuButtonHeight + statusBarHeight}px - 60px)` }">
       <view class="swiper-container" style="background: #FFFFFF; width: 100%;">
         <wd-swiper :list="swiperList" autoplay v-model:current="current" :indicator="{ type: 'dots-bar' }"
-          @click="handleClick"></wd-swiper>
+                   @click="handleClick"></wd-swiper>
       </view>
       <view class="post-list">
         <SocialCard v-for="post in postList" :key="post.id" :cardInfo="post" @like="handleLike" @collect="handleCollect"
-          @comment="handleComment" @share="handleShare" @follow="handleFollow" />
+                    @comment="handleComment(post.id,post.commentNum)" @share="handleShare(post)" @follow="handleFollow" />
       </view>
       <view v-if="postList.length === 0 && !postLoading" class="empty-tip">
         <text>暂无动态</text>
@@ -42,8 +42,9 @@
     </scroll-view>
 
     <!-- 评论弹窗 -->
-    <CommentPopup v-model:show="showCommentPopup" :post-id="currentPostId" @close="handleCommentPopupClose"
-      @comment-success="handleCommentSuccess" />
+    <CommentPopup v-model:show="showCommentPopup" :comment-num="commentNum" :post-id="currentPostId" @close="handleCommentPopupClose"
+                  @comment-success="handleCommentSuccess" />
+    <ShareModal :visible="showShareModal" :shareData="shareData" @close="showShareModal = false" />
   </view>
 </template>
 
@@ -52,10 +53,9 @@ import { ref, onMounted, computed } from 'vue'
 import SocialCard from '@/components/SocialCard.vue'
 import { postApi } from '@/api/post'
 import type { ListPostVOByPageParams } from '@/api/post'
-import CommentInput from '@/components/CommentInput.vue'
-import CommentList from '@/components/CommentList.vue'
-import { postCommentApi } from '@/api/postComment'
 import CommentPopup from '@/components/CommentPopup.vue'
+import ShareModal from '@/components/ShareModal.vue'
+import { onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app'
 
 // 帖子列表数据
 const postList = ref<any[]>([])
@@ -106,7 +106,7 @@ const logoStyle = computed(() => {
   }
 })
 
-//轮播图
+// 轮播图数据
 const swiperList = ref([
   'https://registry.npmmirror.com/wot-design-uni-assets/*/files/redpanda.jpg',
   'https://registry.npmmirror.com/wot-design-uni-assets/*/files/capybara.jpg',
@@ -114,15 +114,15 @@ const swiperList = ref([
   'https://registry.npmmirror.com/wot-design-uni-assets/*/files/moon.jpg',
   'https://registry.npmmirror.com/wot-design-uni-assets/*/files/meng.jpg'
 ])
+
+// 处理轮播图点击事件
 function handleClick(e) {
-  console.log(e)
+  console.log('轮播图点击:', e)
 }
-function onChange(e) {
-  console.log(e)
-}
-// 获取系统信息
+
+// 获取系统信息，用于计算顶部布局
 const getSystemInfo = () => {
-  const systemInfo = uni.getSystemInfoSync()
+  const systemInfo = uni.getWindowInfo()
   statusBarHeight.value = systemInfo.statusBarHeight || 0
 
   // #ifdef MP-WEIXIN
@@ -136,14 +136,7 @@ const getSystemInfo = () => {
   // #endif
 }
 
-// 跳转到搜索页面
-const goToSearch = () => {
-  uni.navigateTo({
-    url: '/pages/search/search'
-  })
-}
-
-// 加载帖子列表
+// 加载帖子列表数据
 const loadPosts = async (isRefresh = false) => {
   if (postLoading.value) return // 防止重复加载
 
@@ -182,7 +175,7 @@ const onScrollToLower = () => {
   }
 }
 
-// 下拉刷新
+// 下拉刷新处理
 const onRefresh = async () => {
   refresherTriggered.value = true
   current.value = 1
@@ -190,7 +183,7 @@ const onRefresh = async () => {
   refresherTriggered.value = false
 }
 
-// 处理喜欢
+// 处理帖子点赞操作
 function handleLike(data: { id: string; hasThumb: boolean; isRollback: boolean }) {
   // 更新本地数据
   console.log("点赞了", data)
@@ -206,7 +199,7 @@ function handleLike(data: { id: string; hasThumb: boolean; isRollback: boolean }
   }
 }
 
-// 处理收藏
+// 处理帖子收藏操作
 function handleCollect(data: { id: string; hasFavour: boolean; isRollback: boolean }) {
   // 更新本地数据
   const post = postList.value.find(p => p.id === data.id)
@@ -224,10 +217,12 @@ function handleCollect(data: { id: string; hasFavour: boolean; isRollback: boole
 // 评论相关
 const showCommentPopup = ref(false)
 const currentPostId = ref('')
+const commentNum = ref(0)
 
 // 处理评论按钮点击
-function handleComment(postId: string) {
+function handleComment(postId: string, postCommentNum: number) {
   currentPostId.value = postId
+  commentNum.value = postCommentNum
   showCommentPopup.value = true
 }
 
@@ -243,12 +238,35 @@ function handleCommentSuccess() {
   loadPosts()
 }
 
-// 处理分享
-function handleShare() {
-  uni.showShareMenu({
-    withShareTicket: true,
-    menus: ['shareAppMessage', 'shareTimeline']
-  })
+// 分享相关状态 - 简化版
+const showShareModal = ref(false)
+const shareData = ref({
+  title: '',
+  desc: '',
+  path: '',
+  imageUrl: ''
+})
+
+// 处理帖子分享操作 - 简化版
+function handleShare(cardInfo) {
+  const postTitle = cardInfo?.content ?
+      (cardInfo.content.length > 30 ? cardInfo.content.substring(0, 30) + '...' : cardInfo.content) :
+      'CampCircle - 校园精彩内容'
+
+  const postImage = cardInfo?.pictureUrlList && cardInfo.pictureUrlList.length > 0 ?
+      cardInfo.pictureUrlList[0] :
+      'https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png'
+
+  shareData.value = {
+    title: postTitle,
+    desc: `来自 ${cardInfo?.user?.userName || '校园用户'} 的精彩分享`,
+    path: `/pages/postDetail/postDetail?id=${cardInfo?.id || ''}`,
+    imageUrl: postImage
+  }
+
+  console.log("分享了", shareData.value)
+  uni.vibrateShort()
+  showShareModal.value = true
 }
 
 // 处理关注
@@ -259,23 +277,29 @@ function handleFollow(data: { id: string; hasFollow: boolean; isRollback: boolea
   }
 }
 
-const fetchLikePosts = async () => {
-  try {
-    postLoading.value = true
-    // TODO: 等待后端实现喜欢列表接口
-    postList.value = []
-    hasMore.value = true
-  } catch (error) {
-    console.error('获取喜欢列表失败:', error)
-  } finally {
-    postLoading.value = false
+// 配置分享给朋友 - 简化版
+onShareAppMessage(() => {
+  return {
+    title: shareData.value.title || 'CampCircle - 校园社交平台',
+    path: shareData.value.path || '/pages/tabbar/home/home',
+    imageUrl: shareData.value.imageUrl || 'https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png'
   }
-}
+})
+
+// 配置分享到朋友圈 - 简化版
+onShareTimeline(() => {
+  return {
+    title: shareData.value.title || 'CampCircle - 发现校园精彩生活',
+    query: shareData.value.path ? `postId=${shareData.value.path.split('=')[1]}` : 'from=timeline',
+    imageUrl: shareData.value.imageUrl || 'https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png'
+  }
+})
 
 onMounted(() => {
   getSystemInfo()
   loadPosts()
 })
+
 </script>
 
 <style lang="scss" scoped>
@@ -283,7 +307,7 @@ onMounted(() => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden; // 防止页面整体滚动
+  overflow: hidden;
 }
 
 .search-container {
@@ -300,12 +324,12 @@ onMounted(() => {
   .logo {
     border-radius: 50%;
     overflow: hidden;
+  }
 
-    image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+  .logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .search-bar {
@@ -314,17 +338,17 @@ onMounted(() => {
     display: flex;
     align-items: center;
     padding: 0 24rpx;
+  }
 
-    image {
-      width: 32rpx;
-      height: 32rpx;
-      margin-right: 12rpx;
-    }
+  .search-bar-img {
+    width: 32rpx;
+    height: 32rpx;
+    margin-right: 12rpx;
+  }
 
-    span {
-      color: #9c9c9c;
-      font-size: 28rpx;
-    }
+  .search-bar-span {
+    color: #9c9c9c;
+    font-size: 28rpx;
   }
 
   .placeholder {
@@ -370,193 +394,6 @@ onMounted(() => {
   color: #999;
   font-size: 28rpx;
   padding: 20rpx 0;
-}
-
-.comment-popup {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: #fff;
-  border-top-left-radius: 20rpx;
-  border-top-right-radius: 20rpx;
-  position: relative;
-}
-
-.comment-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20rpx 30rpx;
-  border-bottom: 1px solid #eee;
-  background: #fff;
-  flex-shrink: 0;
-  z-index: 1;
-
-  .title {
-    font-size: 32rpx;
-    font-weight: bold;
-  }
-}
-
-.comment-container {
-  flex: 1;
-  overflow: hidden;
-  position: relative;
-}
-
-.comment-scroll {
-  height: 100%;
-  width: 100%;
-}
-
-.comment-input-wrapper {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #fff;
-  border-top: 1px solid #eee;
-  padding: 20rpx;
-  z-index: 1;
-}
-
-.empty-comment {
-  text-align: center;
-  color: #999;
-  font-size: 28rpx;
-  padding: 60rpx 0;
-}
-
-.loading-comment {
-  text-align: center;
-  color: #666;
-  font-size: 28rpx;
-  padding: 20rpx 0;
-}
-
-.load-more-comment {
-  text-align: center;
-  color: #666;
-  font-size: 26rpx;
-  padding: 15rpx 0;
-  background: #f8f9fa;
-  margin: 10rpx 20rpx;
-  border-radius: 8rpx;
-}
-
-.no-more-comment {
-  text-align: center;
-  color: #999;
-  font-size: 26rpx;
-  padding: 15rpx 0;
-}
-
-.comment-bottom-space {
-  height: 100rpx; // 底部占位空间，避免被输入框遮挡
-}
-
-.comment-list {
-  padding: 20rpx;
-}
-
-.comment-item {
-  margin-bottom: 30rpx;
-
-  .comment-user {
-    display: flex;
-    align-items: center;
-    margin-bottom: 16rpx;
-
-    .avatar {
-      width: 64rpx;
-      height: 64rpx;
-      border-radius: 50%;
-      margin-right: 16rpx;
-    }
-
-    .user-info {
-      flex: 1;
-
-      .username {
-        font-size: 28rpx;
-        color: #333;
-        font-weight: 500;
-      }
-
-      .time {
-        font-size: 24rpx;
-        color: #999;
-        margin-left: 16rpx;
-      }
-    }
-  }
-
-  .comment-content {
-    font-size: 28rpx;
-    color: #333;
-    line-height: 1.5;
-    margin-left: 80rpx;
-  }
-
-  .reply-list {
-    margin-left: 80rpx;
-    margin-top: 16rpx;
-    background: #f8f9fa;
-    border-radius: 12rpx;
-    padding: 16rpx;
-
-    .reply-item {
-      margin-bottom: 16rpx;
-
-      &:last-child {
-        margin-bottom: 0;
-      }
-
-      .reply-user {
-        display: flex;
-        align-items: center;
-        margin-bottom: 8rpx;
-
-        .avatar {
-          width: 48rpx;
-          height: 48rpx;
-          border-radius: 50%;
-          margin-right: 12rpx;
-        }
-
-        .user-info {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          flex-wrap: wrap;
-
-          .username {
-            font-size: 26rpx;
-            color: #333;
-          }
-
-          .reply-to {
-            font-size: 26rpx;
-            color: #999;
-            margin: 0 8rpx;
-          }
-
-          .time {
-            font-size: 24rpx;
-            color: #999;
-            margin-left: 16rpx;
-          }
-        }
-      }
-
-      .reply-content {
-        font-size: 26rpx;
-        color: #333;
-        line-height: 1.5;
-        margin-left: 60rpx;
-      }
-    }
-  }
 }
 
 .bottom-space {

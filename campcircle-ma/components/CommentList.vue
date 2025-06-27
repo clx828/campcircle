@@ -1,7 +1,8 @@
 <template>
     <scroll-view class="comment-content" scroll-y>
         <view v-if="commentList.length === 0" class="empty-tip">
-            暂无评论，快来抢沙发吧~
+          <EmptyState text="暂无评论" />
+
         </view>
         <view v-else class="comment-list">
             <view v-for="comment in commentList" :key="comment.id" class="comment-item">
@@ -38,6 +39,7 @@
 <script setup lang="ts">
 import { defineProps, defineEmits } from 'vue'
 import { formatTime } from '@/utils/format'
+import EmptyState from '@/components/EmptyState.vue'
 
 interface UserVO {
     id: string

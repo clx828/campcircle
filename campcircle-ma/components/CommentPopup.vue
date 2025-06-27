@@ -4,7 +4,7 @@
         <view class="popup-content">
             <view class="comment-popup">
                 <view class="comment-header">
-                    <text class="title">评论</text>
+                    <text class="title">评论{{props.commentNum }}</text>
                     <text class="close-btn" @click="handleClose">×</text>
                 </view>
                 <view class="comment-container">
@@ -52,6 +52,7 @@ interface Comment {
 const props = defineProps<{
     show: boolean
     postId: string
+    commentNum: number
 }>()
 
 const emit = defineEmits<{
@@ -64,19 +65,18 @@ const emit = defineEmits<{
 const commentList = ref<Comment[]>([])
 const commentCurrent = ref(1)
 const commentPageSize = ref(10)
-const commentTotal = ref(0)
 const replyTo = ref<{ userName: string } | null>(null)
 const parentComment = ref<Comment | null>(null)
 const showCommentInput = ref(false)
 
-// 监听show属性变化
+// 监听弹窗显示状态，显示时加载评论
 watch(() => props.show, (newVal) => {
     if (newVal) {
         loadComments()
     }
 })
 
-// 加载评论列表
+// 加载评论列表数据
 async function loadComments() {
     if (!props.postId) return
     try {
@@ -94,7 +94,7 @@ async function loadComments() {
     }
 }
 
-// 处理回复
+// 处理回复评论操作
 function handleReply(comment: Comment, replyToComment?: Comment) {
     // 如果replyToComment存在，说明是回复二级评论
     // 此时comment是一级评论，replyToComment是被回复的二级评论

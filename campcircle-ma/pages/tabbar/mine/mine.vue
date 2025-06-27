@@ -1,7 +1,7 @@
 <template>
   <!-- 固定在顶部的头像，不影响下面布局 -->
-  <view v-if="!isAtTop" class="fixed-top-header">
-    <image :src="userInfo.userAvatar" class="fixed-avatar"></image>
+  <view v-if="!isAtTop" class="fixed-top-header" :style="headerStyle">
+    <image :src="userInfo.userAvatar" class="fixed-avatar" :style="avatarStyle"></image>
   </view>
 
   <scroll-view class="profile-page" scroll-y="true" @scroll="onScrollThrottled" @scrolltolower="loadMore"
@@ -104,7 +104,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted, watch } from 'vue'
+import { reactive, ref, onMounted, watch, computed } from 'vue'
 import { useUserStore } from '@/stores/userStore'
 import { IUser } from '@/model/user'
 import AvatarUpload from '@/components/AvatarUpload.vue'
@@ -113,6 +113,7 @@ import EmptyState from '@/components/EmptyState.vue'
 import { postApi } from '@/api/post'
 import { followApi } from '@/api/follow'
 import { useRouter } from 'vue-router'
+import { onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app'
 
 // ===== 响应式数据 =====
 const tab = ref<number>(0)
@@ -298,7 +299,6 @@ onMounted(() => {
   fetchMyPosts()
   fetchPostNums()
   fetchFollowNums()
-
 })
 
 // ===== 下拉刷新相关 =====
@@ -306,6 +306,43 @@ const refresherTriggered = ref(false)
 
 // ===== 滚动监听相关 =====
 const isAtTop = ref(true) // 是否在顶部
+const scrollTop = ref(0) // 当前滚动位置
+
+// 滚动渐变效果的计算属性
+const scrollProgress = computed(() => {
+  // 设置渐变区间：50px-200px
+  const startFade = 50
+  const endFade = 200
+
+  if (scrollTop.value <= startFade) {
+    return 0
+  } else if (scrollTop.value >= endFade) {
+    return 1
+  } else {
+    return (scrollTop.value - startFade) / (endFade - startFade)
+  }
+})
+
+// 头部样式
+const headerStyle = computed(() => {
+  const opacity = scrollProgress.value * 0.95 // 最大不透明度95%
+  return {
+    backgroundColor: `rgba(0, 0, 0, ${opacity})`,
+    transition: scrollTop.value === 0 ? 'background-color 0.3s ease' : 'none'
+  }
+})
+
+// 头像样式
+const avatarStyle = computed(() => {
+  // 头像从下方30px的位置逐渐上升到正常位置
+  const translateY = (1 - scrollProgress.value) * 30
+  const opacity = scrollProgress.value
+  return {
+    transform: `translateY(${translateY}px)`,
+    opacity: opacity,
+    transition: scrollTop.value === 0 ? 'all 0.3s ease' : 'none'
+  }
+})
 
 // 节流函数
 const throttle = (func: Function, delay: number) => {
@@ -329,6 +366,7 @@ const throttle = (func: Function, delay: number) => {
 // 监听滚动事件
 const onScroll = (e: any) => {
   const { scrollTop: currentScrollTop } = e.detail
+  scrollTop.value = currentScrollTop
   isAtTop.value = currentScrollTop <= 50
 }
 
@@ -377,6 +415,25 @@ const closeThumbModal = () => {
   uni.vibrateShort()
   showThumb.value = false
 }
+
+// 配置小程序分享功能
+onShareAppMessage(() => {
+  console.log('个人主页分享给朋友事件触发了')
+  return {
+    title: `${userInfo.userName}的个人主页 - CampCircle`,
+    path: `/pages/tabbar/mine/mine?id=${userInfo.id}`,
+    imageUrl: userInfo.userAvatar || 'https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png'
+  }
+})
+
+onShareTimeline(() => {
+  console.log('个人主页分享到朋友圈事件触发了')
+  return {
+    title: `${userInfo.userName}的校园生活 - CampCircle`,
+    query: `id=${userInfo.id}&from=timeline`,
+    imageUrl: userInfo.userAvatar || 'https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png'
+  }
+})
 </script>
 
 <style lang="scss">
@@ -391,11 +448,10 @@ const closeThumbModal = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
-  background-color: rgba(0, 0, 0, 0.8);
+  // 背景色通过 JavaScript 动态设置
 
   .fixed-avatar {
     margin-top: 15px;
@@ -404,6 +460,7 @@ const closeThumbModal = () => {
     border-radius: 50%;
     border: 2px solid rgba(255, 255, 255, 0.8);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    // transform 和 opacity 通过 JavaScript 动态设置
   }
 }
 
@@ -530,7 +587,7 @@ const closeThumbModal = () => {
   margin-top: -3vh;
   position: relative;
   z-index: 2;
-  min-height: 63vh; // 精确计算：60vh + 3vh(margin-top补偿)
+  // min-height: 63vh; // 精确计算：60vh + 3vh(margin-top补偿)
 }
 
 .content-tabs {
@@ -550,14 +607,15 @@ const closeThumbModal = () => {
 // ===== 标签页内容 =====
 .tab-content {
   padding: 20rpx;
-  padding-top: 0;
+  padding-top: -7px;
   min-height: 200rpx;
+  background-color: #f1f1f1;
 
   &--empty {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 400rpx;
+    min-height: 60vh;
   }
 }
 

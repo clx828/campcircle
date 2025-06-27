@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { onShow } from '@dcloudio/uni-app'
+import { onShow, onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/userStore'
 import RouterGuard from '@/utils/routerGuard'
 
@@ -30,6 +30,25 @@ onShow(() => {
           url: `/pages/login/login?redirect=${encodeURIComponent(route)}`
         })
     }
+  }
+})
+
+// 配置小程序分享功能
+onShareAppMessage(() => {
+  console.log('消息页面分享给朋友事件触发了')
+  return {
+    title: 'CampCircle - 校园消息互动平台',
+    path: '/pages/tabbar/info/info',
+    imageUrl: 'https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png'
+  }
+})
+
+onShareTimeline(() => {
+  console.log('消息页面分享到朋友圈事件触发了')
+  return {
+    title: '校园社交新体验 - CampCircle',
+    query: 'from=timeline',
+    imageUrl: 'https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png'
   }
 })
 </script>

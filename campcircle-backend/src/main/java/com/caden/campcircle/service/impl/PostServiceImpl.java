@@ -130,6 +130,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         queryWrapper.eq(ObjectUtils.isNotEmpty(userId), "userId", userId);
         queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
                 sortField);
+        //按时间升序
+        queryWrapper.orderByDesc("createTime");
         return queryWrapper;
     }
 
@@ -227,9 +229,17 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
 
     @Override
     public PostVO getPostVO(Post post, HttpServletRequest request) {
+        if (post == null) {
+            return null;
+        }
+
         PostVO postVO = PostVO.objToVo(post);
         long postId = post.getId();
-        // 1. 关联查询用户信息
+
+        // 1. 处理图片列表
+        fillPostVOPictures(post, postVO);
+
+        // 2. 关联查询用户信息
         Long userId = post.getUserId();
         User user = null;
         if (userId != null && userId > 0) {
@@ -237,22 +247,32 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }
         UserVO userVO = userService.getUserVO(user);
         postVO.setUser(userVO);
-        // 2. 已登录，获取用户点赞、收藏状态
+
+        // 3. 已登录，获取用户点赞、收藏、关注状态
         User loginUser = userService.getLoginUserPermitNull(request);
         if (loginUser != null) {
             // 获取点赞
             QueryWrapper<PostThumb> postThumbQueryWrapper = new QueryWrapper<>();
-            postThumbQueryWrapper.in("postId", postId);
+            postThumbQueryWrapper.eq("postId", postId);
             postThumbQueryWrapper.eq("userId", loginUser.getId());
             PostThumb postThumb = postThumbMapper.selectOne(postThumbQueryWrapper);
             postVO.setHasThumb(postThumb != null);
+
             // 获取收藏
             QueryWrapper<PostFavour> postFavourQueryWrapper = new QueryWrapper<>();
-            postFavourQueryWrapper.in("postId", postId);
+            postFavourQueryWrapper.eq("postId", postId);
             postFavourQueryWrapper.eq("userId", loginUser.getId());
             PostFavour postFavour = postFavourMapper.selectOne(postFavourQueryWrapper);
             postVO.setHasFavour(postFavour != null);
+
+            // 获取关注
+            QueryWrapper<Follow> followQueryWrapper = new QueryWrapper<>();
+            followQueryWrapper.eq("userId", loginUser.getId());
+            followQueryWrapper.eq("followUserId", post.getUserId());
+            Follow follow = followMapper.selectOne(followQueryWrapper);
+            postVO.setHasFollow(follow != null);
         }
+
         return postVO;
     }
 
@@ -297,35 +317,24 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }
         // 填充信息
         List<PostVO> postVOList = postList.stream().map(post -> {
-            String pictureIdStr = post.getPictureList();
-            List<String> pictureIdList = JSONUtil.toList(pictureIdStr, String.class);
-            List<Long> pictureIds = pictureIdList.stream()
-                    .map(id -> {
-                        try {
-                            return Long.parseLong(id);
-                        } catch (NumberFormatException e) {
-                            log.warn("Invalid picture ID: {}", id);
-                            return null;
-                        }
-                    })
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-            List<Picture> pictures = pictureService.listByIds(pictureIds);
-            List<String> pictureUrlList = pictures.stream()
-                    .map(Picture::getPictureUrl)
-                    .collect(Collectors.toList());
             PostVO postVO = PostVO.objToVo(post);
-            postVO.setPictureUrlList(pictureUrlList);
+
+            // 处理图片列表（复用私有方法）
+            fillPostVOPictures(post, postVO);
+
+            // 设置用户信息
             Long userId = post.getUserId();
             User user = null;
             if (userIdUserListMap.containsKey(userId)) {
                 user = userIdUserListMap.get(userId).get(0);
             }
             postVO.setUser(userService.getUserVO(user));
+
+            // 设置用户交互状态
             postVO.setHasFollow(userIdHasFollowMap.getOrDefault(post.getUserId(), false));
             postVO.setHasThumb(postIdHasThumbMap.getOrDefault(post.getId(), false));
             postVO.setHasFavour(postIdHasFavourMap.getOrDefault(post.getId(), false));
-            postVO.setPictureUrlList(pictureUrlList);
+
             return postVO;
         }).collect(Collectors.toList());
         postVOPage.setRecords(postVOList);
@@ -352,6 +361,44 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
                 postThumbMapper.selectCount(new QueryWrapper<PostThumb>().eq("userId", id))));
 
         return myPostNumVO;
+    }
+
+    /**
+     * 填充 PostVO 的图片信息
+     *
+     * @param post   原始帖子对象
+     * @param postVO 帖子VO对象
+     */
+    private void fillPostVOPictures(Post post, PostVO postVO) {
+        String pictureIdStr = post.getPictureList();
+        List<String> pictureIdList = JSONUtil.toList(pictureIdStr, String.class);
+
+        // 判断是否有图片
+        if (pictureIdList != null && !pictureIdList.isEmpty()) {
+            List<Long> pictureIds = pictureIdList.stream()
+                    .map(id -> {
+                        try {
+                            return Long.parseLong(id);
+                        } catch (NumberFormatException e) {
+                            log.warn("Invalid picture ID: {}", id);
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            if (!pictureIds.isEmpty()) {
+                List<Picture> pictures = pictureService.listByIds(pictureIds);
+                List<String> pictureUrlList = pictures.stream()
+                        .map(Picture::getPictureUrl)
+                        .collect(Collectors.toList());
+                postVO.setPictureUrlList(pictureUrlList);
+            } else {
+                postVO.setPictureUrlList(new ArrayList<>());
+            }
+        } else {
+            postVO.setPictureUrlList(pictureIdList != null ? pictureIdList : new ArrayList<>());
+        }
     }
 
     private Long getOrCacheCount(String redisKey, Supplier<Long> dbQuery) {

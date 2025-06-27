@@ -31,7 +31,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, reactive } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onShow, onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/userStore'
 import RouterGuard from '@/utils/routerGuard'
 import { postApi } from '@/api/post'
@@ -206,6 +206,25 @@ onShow(() => {
         url: `/pages/login/login?redirect=${encodeURIComponent(route)}`
       })
     }
+  }
+})
+
+// 配置小程序分享功能
+onShareAppMessage(() => {
+  console.log('发布页面分享给朋友事件触发了')
+  return {
+    title: '来CampCircle分享你的校园生活吧！',
+    path: '/pages/tabbar/release/release',
+    imageUrl: 'https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png'
+  }
+})
+
+onShareTimeline(() => {
+  console.log('发布页面分享到朋友圈事件触发了')
+  return {
+    title: '记录校园美好时光 - CampCircle',
+    query: 'from=timeline',
+    imageUrl: 'https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png'
   }
 })
 </script>

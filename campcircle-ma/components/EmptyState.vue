@@ -24,7 +24,7 @@ const props = defineProps({
     align-items: center;
     justify-content: flex-end;
     /* 靠下对齐，更贴近上半部分底部 */
-    padding-bottom: 40rpx;
+    padding-bottom: 20rpx;
     box-sizing: border-box;
 }
 

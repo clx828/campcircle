@@ -1,7 +1,7 @@
 <template>
-    <view class="social-card">
+    <view class="social-card" :class="{ 'hide-actions': hideActions }">
         <view class="header">
-            <image :src="cardInfo.user.userAvatar" class="avatar" />
+            <image class="avatar-img" :src="cardInfo.user.userAvatar" />
             <view class="user-info">
                 <view class="nickname">{{ cardInfo.user.userName }}</view>
                 <view class="time">{{ formatTime(cardInfo.createTime) }}</view>
@@ -13,7 +13,7 @@
                     hover-class="followed-btn-hover" @click="handleFollow">已关注</button>
             </view>
         </view>
-        <view class="content-text">{{ cardInfo.content }}</view>
+        <view class="content-text" @tap="handleContentClick">{{ cardInfo.content }}</view>
         <view v-if="cardInfo.pictureUrlList && cardInfo.pictureUrlList.length > 0" class="image-list"
             :class="imageClass">
             <template v-if="cardInfo.pictureUrlList.length === 1">
@@ -26,7 +26,7 @@
                 </template>
             </template>
         </view>
-        <view class="actions">
+        <view v-if="!hideActions" class="actions">
             <button class="action-btn left-btn" @click="handleShare" hover-class="btn-hover">
                 <image src="/static/button/zhuanfa.png" />
             </button>
@@ -94,11 +94,12 @@ interface CardInfo {
 
 const props = defineProps<{
     cardInfo: CardInfo
+    hideActions?: boolean
 }>()
 const userStore = useUserStore()
-console.log("这是当前用户信息")
 const emit = defineEmits(['share', 'like', 'comment', 'collect', 'follow'])
 
+// 根据图片数量计算图片容器的样式类
 const imageClass = computed(() => {
     if (props.cardInfo.pictureUrlList.length === 1) return 'single-img'
     if (props.cardInfo.pictureUrlList.length === 2) return 'two-img'
@@ -106,6 +107,7 @@ const imageClass = computed(() => {
     return ''
 })
 
+// 根据图片数量计算单个图片的样式
 const imgStyle = computed(() => {
     if (props.cardInfo.pictureUrlList.length === 1) {
         return 'width: 50%; height: auto; border-radius: 8rpx;'
@@ -114,6 +116,7 @@ const imgStyle = computed(() => {
     }
 })
 
+// 预览图片
 function preview(idx: number) {
     uni.previewImage({
         urls: props.cardInfo.pictureUrlList,
@@ -121,13 +124,24 @@ function preview(idx: number) {
     })
 }
 
+// 处理内容点击跳转
+function handleContentClick() {
+    if (!props.hideActions) {
+        uni.navigateTo({
+            url: `/pages/postDetail/postDetail?id=${props.cardInfo.id}`
+        })
+    }
+}
+
+// 处理分享操作
 function handleShare() {
     uni.vibrateShort()
     emit('share')
 }
 
 // 处理喜欢
-async function handleLike() {
+ // 处理点赞操作
+const handleLike=async()=> {
     uni.vibrateShort()
     const newHasThumb = !props.cardInfo.hasThumb
     // 先更新本地状态
@@ -156,13 +170,15 @@ async function handleLike() {
     }
 }
 
+// 处理评论操作
 function handleComment() {
     uni.vibrateShort()
     emit('comment', props.cardInfo.id)
 }
 
 // 处理收藏
-async function handleCollect() {
+ // 处理收藏操作
+const handleCollect = async()=> {
     uni.vibrateShort()
     const newHasFavour = !props.cardInfo.hasFavour
     // 先更新本地状态
@@ -199,7 +215,8 @@ async function handleCollect() {
 }
 
 // 处理关注
-async function handleFollow() {
+ // 处理关注操作
+const handleFollow= async()=> {
     uni.vibrateShort()
     const newHasFollow = !props.cardInfo.hasFollow
     // 先更新本地状态
@@ -262,7 +279,7 @@ async function handleFollow() {
     margin-bottom: 16rpx;
 }
 
-.avatar {
+.avatar-img {
     width: 88rpx;
     height: 88rpx;
     border-radius: 50%;
@@ -271,7 +288,7 @@ async function handleFollow() {
     box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease;
 
-    &:active {
+    &.active {
         transform: scale(0.95);
     }
 }
@@ -489,5 +506,14 @@ async function handleFollow() {
     transform: translateY(-1rpx) scale(0.98);
     background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
     box-shadow: 0 6rpx 16rpx rgba(0, 0, 0, 0.08);
+}
+
+// 隐藏操作按钮时的样式
+.hide-actions {
+    box-shadow: none !important;
+
+    .actions {
+        display: none;
+    }
 }
 </style>

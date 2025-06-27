@@ -64,22 +64,33 @@ export const postApi = {
         return request.post('/post_favour/', doPostFavourParams)
     },
 
+    // 分页获取帖子列表
     listPostVOByPage(listPostVOByPageParams: ListPostVOByPageParams) {
         return request.post('/post/list/page/vo', listPostVOByPageParams)
     },
 
+    // 分页获取我的帖子列表
     listMyPostVOByPage(listMyPostVOByPageParams: ListMyPostVOByPageParams) {
         return request.post('/post/my/list/page/vo', listMyPostVOByPageParams)
     },
 
+    // 分页获取我收藏的帖子列表
     listMyFavourPostVOByPage(listMyPostVOByPageParams: ListMyPostVOByPageParams) {
         return request.post('/post_favour/my/list/page', listMyPostVOByPageParams)
     },
 
+    // 分页获取我点赞的帖子列表
     listMyThumbPostVOByPage(listMyPostVOByPageParams: ListMyPostVOByPageParams) {
         return request.post('/post_thumb/my/list/page', listMyPostVOByPageParams)
     },
+
+    // 获取我的帖子数量
     getMyPostNum() {
         return request.get('/post/get/my/postNum')
+    },
+
+    // 根据ID获取帖子详情
+    getPostById(id: string | number) {
+        return request.get(`/post/get/vo/?id=${id}`)
     }
 }

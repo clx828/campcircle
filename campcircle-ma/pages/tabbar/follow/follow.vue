@@ -1,128 +1,122 @@
 <template>
-    <view class="content">
+    <view class="follow-page">
         <view class="header">
-            <text class="title">{{ isFans ? '粉丝' : '关注' }}</text>
+            <text class="title">关注</text>
         </view>
-        <view v-if="list.length === 0" class="empty">暂无数据</view>
-        <view v-else>
-            <view v-for="item in list" :key="item.id" class="user-item">
-                <image :src="userAvatar(item)" class="avatar" />
-                <view class="info">
-                    <view class="name">{{ userName(item) }}</view>
-                    <view class="profile">{{ userProfile(item) }}</view>
-                </view>
+
+        <view class="content">
+            <view class="share-section">
+                <button class="share-btn" open-type="share">
+                    <text>分享给朋友</text>
+                </button>
+                <button class="share-btn" @click="shareToTimeline">
+                    <text>分享到朋友圈</text>
+                </button>
+            </view>
+
+            <view class="follow-list">
+                <!-- 这里可以添加关注列表内容 -->
+                <text class="placeholder">关注功能开发中...</text>
             </view>
         </view>
     </view>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
-import { followApi } from '@/api/follow'
-import { useUserStore } from '@/stores/userStore'
-import RouterGuard from '@/utils/routerGuard'
+import { onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app'
 
-const list = ref<any[]>([])
-const isFans = ref(false)
-
-// 获取用户头像、昵称、简介
-const userAvatar = (item: any) => isFans.value ? item.fansUserVO?.userAvatar : item.followUserVO?.userAvatar
-const userName = (item: any) => isFans.value ? item.fansUserVO?.userName : item.followUserVO?.userName
-const userProfile = (item: any) => isFans.value ? item.fansUserVO?.userProfile || '' : item.followUserVO?.userProfile || ''
-
-const fetchList = async () => {
-    const params = { current: 1, pageSize: 100 }
-    let res
-    if (isFans.value) {
-        res = await followApi.getMyFansVOlist(params)
-    } else {
-        res = await followApi.getMyFollowVOList(params)
+// 配置分享给朋友
+onShareAppMessage(() => {
+    console.log('分享给朋友事件触发了')
+    return {
+        title: 'CampCircle - 校园社交平台',
+        path: '/pages/tabbar/follow/follow',
+        imageUrl: 'https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png'
     }
-    if (res.code === 0 && res.data) {
-        list.value = res.data.records || []
+})
+
+// 配置分享到朋友圈
+onShareTimeline(() => {
+    console.log('分享到朋友圈事件触发了')
+    return {
+        title: 'CampCircle - 发现校园精彩生活',
+        query: 'from=timeline',
+        imageUrl: 'https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png'
     }
+})
+
+// 手动触发分享到朋友圈
+const shareToTimeline = () => {
+    uni.vibrateShort()
+    // 注意：朋友圈分享只能通过右上角菜单触发，这里只是示例
+    uni.showToast({
+        title: '请点击右上角菜单分享到朋友圈',
+        icon: 'none',
+        duration: 2000
+    })
 }
-
-onLoad((options) => {
-    isFans.value = options.type === 'fans'
-    fetchList()
-})
-
-// 在 onShow 生命周期中进行路由守卫
-onMounted(() => {
-    const pages = getCurrentPages()
-    const currentPage = pages[pages.length - 1]
-    const route = currentPage?.route || ''
-
-    // 确保是 tabBar 页面
-    if (!RouterGuard.isTabBarPage(route)) {
-        return
-    }
-
-    // 检查是否需要登录
-    if (RouterGuard.needAuth(route)) {
-        const userStore = useUserStore()
-
-        // 如果用户未登录，跳转到登录页
-        if (!userStore.isLoggedIn) {
-            console.log('TabBar页面需要登录，跳转到登录页面:', route)
-
-            // 使用 nextTick 延迟执行跳转，避免可能的闪烁
-            uni.nextTick(() => {
-                uni.navigateTo({
-                    url: `/pages/login/login?redirect=${encodeURIComponent(route)}`
-                })
-            })
-        }
-    }
-})
 </script>
 
 <style lang="scss" scoped>
-.content {
-    padding: 30rpx;
-}
+.follow-page {
+    min-height: 100vh;
+    background-color: #f5f5f5;
 
-.header {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 30rpx;
-}
+    .header {
+        background-color: #fff;
+        padding: 20rpx 30rpx;
+        border-bottom: 1rpx solid #eee;
 
-.title {
-    font-size: 36rpx;
-    font-weight: bold;
-}
-
-.empty {
-    text-align: center;
-    color: #888;
-    margin-top: 100rpx;
-}
-
-.user-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 30rpx;
-
-    .avatar {
-        width: 80rpx;
-        height: 80rpx;
-        border-radius: 50%;
-        margin-right: 20rpx;
+        .title {
+            font-size: 36rpx;
+            font-weight: bold;
+            color: #333;
+        }
     }
 
-    .info {
-        .name {
-            font-size: 28rpx;
-            font-weight: 500;
+    .content {
+        padding: 30rpx;
+
+        .share-section {
+            background-color: #fff;
+            border-radius: 20rpx;
+            padding: 40rpx 30rpx;
+            margin-bottom: 30rpx;
+
+            .share-btn {
+                width: 100%;
+                height: 80rpx;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: #fff;
+                border: none;
+                border-radius: 40rpx;
+                font-size: 32rpx;
+                margin-bottom: 20rpx;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                &:last-child {
+                    margin-bottom: 0;
+                    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+                }
+
+                &:active {
+                    opacity: 0.8;
+                }
+            }
         }
 
-        .profile {
-            font-size: 22rpx;
-            color: #999;
+        .follow-list {
+            background-color: #fff;
+            border-radius: 20rpx;
+            padding: 40rpx 30rpx;
+            text-align: center;
+
+            .placeholder {
+                color: #999;
+                font-size: 28rpx;
+            }
         }
     }
 }

@@ -56,7 +56,12 @@
         "backgroundFetch": {
             "mode": "periodic",
             "interval": 0
-        }
+        },
+        "optimization": {
+            "subPackages": true
+        },
+        "navigateToMiniProgramAppIdList": [],
+        "shareLocation": true
     },
     "vueVersion": "3"
 }

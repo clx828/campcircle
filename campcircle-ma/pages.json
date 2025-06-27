@@ -11,7 +11,9 @@
 			"style": {
 				"navigationBarTitleText": "首页",
 				"navigationStyle": "custom",
-				"navigationBarTextStyle": "white"
+				"navigationBarTextStyle": "white",
+				"enableShareAppMessage": true,
+				"enableShareTimeline": true
 			}
 		},
 		{
@@ -25,25 +27,33 @@
 		{
 			"path": "pages/tabbar/home/home",
 			"style": {
-				"navigationBarTitleText": "首页"
+				"navigationBarTitleText": "首页",
+				"enableShareAppMessage": true,
+				"enableShareTimeline": true
 			}
 		},
 		{
 			"path": "pages/tabbar/follow/follow",
 			"style": {
-				"navigationBarTitleText": "关注"
+				"navigationBarTitleText": "关注",
+				"enableShareAppMessage": true,
+				"enableShareTimeline": true
 			}
 		},
 		{
 			"path": "pages/tabbar/release/release",
 			"style": {
-				"navigationBarTitleText": "发布"
+				"navigationBarTitleText": "发布",
+				"enableShareAppMessage": true,
+				"enableShareTimeline": true
 			}
 		},
 		{
 			"path": "pages/tabbar/info/info",
 			"style": {
-				"navigationBarTitleText": "消息"
+				"navigationBarTitleText": "消息",
+				"enableShareAppMessage": true,
+				"enableShareTimeline": true
 			}
 		},
 		{
@@ -51,7 +61,8 @@
 			"style": {
 				"navigationBarTitleText": "我的",
 				"navigationStyle": "custom",
-				"navigationBarTextStyle": "white"
+				"navigationBarTextStyle": "white",
+				"enableShareAppMessage": true
 			}
 		},
 		{
@@ -65,6 +76,15 @@
 			"path": "pages/followList/followList",
 			"style": {
 				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/postDetail/postDetail",
+			"style": {
+				"navigationStyle": "custom",
+				"enableShareAppMessage": true,
+				"enableShareTimeline": true,
 				"enablePullDownRefresh": true
 			}
 		}

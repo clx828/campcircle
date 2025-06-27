@@ -2,18 +2,16 @@
     <view class="comment-input-wrapper">
         <!-- 输入框触发区域 -->
         <view class="input-trigger" @click="showPopup = true">
-            <input type="text" :placeholder="replyTo ? `回复 ${replyTo.userName}` : placeholder" disabled />
+            <input class="input-el" type="text" :placeholder="replyTo ? `回复 ${replyTo.userName}` : placeholder"
+                disabled />
             <view class="trigger-icon">
                 <wd-icon name="edit" size="20px" color="#999" />
             </view>
         </view>
 
-        <!-- 弹出层 - 使用固定定位 -->
+        <!-- 弹出层 - 使用弹性布局 -->
         <view v-if="showPopup" class="popup-mask" @click="handleMaskClick">
-            <view class="comment-popup" :style="{
-                bottom: keyboardHeight > 0 ? `${keyboardHeight}px` : '0',
-                transition: 'bottom 0.3s ease-out'
-            }" @click.stop="">
+            <view class="comment-popup" @click.stop="">
                 <!-- 顶部拖拽指示器 -->
                 <view class="popup-indicator">
                     <view class="indicator-bar"></view>
@@ -23,8 +21,8 @@
                 <!-- 输入区域 -->
                 <view class="input-section">
                     <view class="textarea-wrapper" :class="{ 'focus': isFocused }">
-                        <textarea v-model="commentText" :placeholder="replyTo ? `回复 ${replyTo.userName}` : placeholder"
-                            :focus="autoFocus" :adjust-position="false" :cursor-spacing="0" :show-confirm-bar="false"
+                        <textarea ref="inputRef" v-model="commentText" :placeholder="replyTo ? `回复 ${replyTo.userName}` : placeholder"
+                            :focus="autoFocus" :adjust-position="true" :cursor-spacing="20" :show-confirm-bar="false"
                             :auto-height="true" :hold-keyboard="true" maxlength="1000" class="comment-textarea"
                             @focus="handleFocus" @blur="handleBlur" />
                         <view class="char-count">{{ commentText.length }}/1000</view>
@@ -88,10 +86,9 @@ const emit = defineEmits(['submit', 'close', 'update:show'])
 const showPopup = ref(false)
 const commentText = ref('')
 const isAnonymous = ref(false)
-const keyboardHeight = ref(0)
-const safeAreaBottom = ref(0)
 const isFocused = ref(false)
 const autoFocus = ref(false)
+const inputRef = ref(null)  // 输入框引用
 
 // 监听show属性变化
 watch(() => props.show, (newVal) => {
@@ -103,8 +100,9 @@ watch(() => props.show, (newVal) => {
         }, 100)
     } else {
         autoFocus.value = false
-        keyboardHeight.value = 0
         isFocused.value = false
+        // 关闭时清空输入内容
+        commentText.value = ''
     }
 })
 
@@ -120,43 +118,25 @@ watch(showPopup, (newVal) => {
         }, 100)
     } else {
         autoFocus.value = false
-        keyboardHeight.value = 0
         isFocused.value = false
         commentText.value = ''
         isAnonymous.value = false
     }
 })
 
+
+
 // 监听键盘高度变化
 onMounted(() => {
-    // 获取系统信息
-    const windowInfo = uni.getWindowInfo()
-    const deviceInfo = uni.getDeviceInfo()
-    safeAreaBottom.value = windowInfo.safeAreaInsets?.bottom || 0
-
-    console.log('窗口信息:', windowInfo)
-    console.log('设备信息:', deviceInfo)
-    console.log('安全区域底部:', safeAreaBottom.value)
-
-    // 监听键盘高度变化
+    // 监听键盘高度变化，用于自动关闭
     uni.onKeyboardHeightChange((res) => {
         console.log('键盘高度变化:', res.height)
-        keyboardHeight.value = res.height
 
-        // 确保弹出层在键盘弹出时不会被遮挡
-        if (res.height > 0) {
-            nextTick(() => {
-                const query = uni.createSelectorQuery()
-                query.select('.comment-popup').boundingClientRect()
-                query.exec((res) => {
-                    if (res[0]) {
-                        uni.pageScrollTo({
-                            scrollTop: res[0].top,
-                            duration: 300
-                        })
-                    }
-                })
-            })
+        // 键盘关闭时自动隐藏弹出层
+        if (res.height === 0 && showPopup.value && isFocused.value) {
+            setTimeout(() => {
+                handleClose()
+            }, 100)
         }
     })
 })
@@ -190,15 +170,25 @@ function handleBlur() {
     // 延迟处理，避免点击发送按钮时焦点丢失
     setTimeout(() => {
         isFocused.value = false
-    }, 100)
+    }, 200)
+}
+
+// 处理关闭弹出层
+function handleClose() {
+    showPopup.value = false
+    emit('close')
+    emit('update:show', false)
+    // 失去焦点，关闭键盘
+    if (inputRef.value) {
+        inputRef.value.blur()
+    }
+    isFocused.value = false
+    commentText.value = ''
 }
 
 // 处理蒙层点击
 function handleMaskClick() {
-    if (!isFocused.value) {
-        showPopup.value = false
-        emit('update:show', false)
-    }
+    handleClose()
 }
 
 // 处理提交
@@ -255,12 +245,12 @@ function handleEmoji() {
     border: 2rpx solid transparent;
     transition: all 0.3s ease;
 
-    &:active {
+    &.active {
         background: #f0f0f0;
         transform: scale(0.98);
     }
 
-    input {
+    .input-el {
         flex: 1;
         height: 100%;
         font-size: 28rpx;
@@ -277,7 +267,7 @@ function handleEmoji() {
     }
 }
 
-// 弹出层蒙层
+// 弹出层蒙层 - 弹性布局
 .popup-mask {
     position: fixed;
     top: 0;
@@ -285,16 +275,13 @@ function handleEmoji() {
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.5);
-    z-index: 9998;
+    z-index: 9999;
     display: flex;
-    align-items: flex-end;
+    flex-direction: column;
 }
 
-// 弹出层主体
+// 弹出层主体 - 弹性布局
 .comment-popup {
-    position: absolute;
-    left: 0;
-    right: 0;
     background: #fff;
     border-top-left-radius: 24rpx;
     border-top-right-radius: 24rpx;
@@ -302,8 +289,10 @@ function handleEmoji() {
     display: flex;
     flex-direction: column;
     box-shadow: 0 -8rpx 32rpx rgba(0, 0, 0, 0.15);
-    max-height: 70vh;
+    margin-top: auto;
     min-height: 300rpx;
+    max-height: 60vh;
+    width: 100%;
 }
 
 .popup-indicator {

@@ -50,3 +50,33 @@
 /* .wd-popup-wrapper.data-v-82a7a455 .wd-popup {
 	
 } */
+
+/* 全局隐藏滚动条 */
+/* 针对原生滚动条 */
+::-webkit-scrollbar {
+	width: 0 !important;
+	height: 0 !important;
+	background: transparent !important;
+}
+
+/* 针对 scroll-view 组件（uni-app） */
+scroll-view::-webkit-scrollbar {
+	display: none !important;
+	width: 0 !important;
+	height: 0 !important;
+	background: transparent !important;
+}
+
+/* Firefox */
+html,
+body,
+scroll-view {
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+scroll-view::-webkit-scrollbar {
+	display: none !important;
+}
