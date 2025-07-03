@@ -20,4 +20,7 @@ export const followApi = {
     getMyFollowNum() {
         return request.get('/follow/get/my/num')
     },
+    getFollowPostList(pageRequest: pageRequest) {
+        return request.get('/follow/my/follow/post/list', pageRequest)
+    }
 }

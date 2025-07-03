@@ -36,23 +36,23 @@
                         <image v-if="!cardInfo.hasThumb" src="/static/button/xihuan.png" />
                         <image v-else src="/static/button/xihuan-active.png" />
                     </button>
-                    <text v-if="cardInfo.thumbNum === 0">喜欢</text>
-                    <text v-else>{{ cardInfo.thumbNum }}</text>
+                    <text v-if="cardInfo.thumbNum === 0" class="btn-text">喜欢</text>
+                    <text v-else class="btn-text">{{ cardInfo.thumbNum }}</text>
                 </view>
                 <view>
                     <button class="action-btn" @click="handleCollect" hover-class="btn-hover">
                         <image v-if="!cardInfo.hasFavour" src="/static/button/shouchang.png" />
                         <image v-else src="/static/button/shouchang-active.png" />
                     </button>
-                    <text v-if="cardInfo.favourNum === 0">收藏</text>
-                    <text v-else>{{ cardInfo.favourNum }}</text>
+                    <text v-if="cardInfo.favourNum === 0" class="btn-text">收藏</text>
+                    <text v-else class="btn-text">{{ cardInfo.favourNum }}</text>
                 </view>
                 <view>
                     <button class="action-btn" @click="handleComment" hover-class="btn-hover">
                         <image src="/static/button/pinglun.png" />
                     </button>
-                    <text v-if="cardInfo.commentNum === 0">评论</text>
-                    <text v-else>{{ cardInfo.commentNum }}</text>
+                    <text v-if="cardInfo.commentNum === 0" class="btn-text">评论</text>
+                    <text v-else class="btn-text">{{ cardInfo.commentNum }}</text>
                 </view>
             </view>
         </view>
@@ -406,7 +406,7 @@ const handleFollow= async()=> {
     }
 }
 
-.right-btns text {
+.right-btns .btn-text {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     font-size: 24rpx;
     color: #666;

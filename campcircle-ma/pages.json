@@ -2,7 +2,8 @@
 	"easycom": {
 		"autoscan": true,
 		"custom": {
-			"^wd-(.*)": "wot-design-uni/components/wd-$1/wd-$1.vue"
+			"^wd-(.*)": "wot-design-uni/components/wd-$1/wd-$1.vue",
+			"^CommentInput$": "@/components/CommentInput.vue"
 		}
 	},
 	"pages": [
@@ -11,9 +12,7 @@
 			"style": {
 				"navigationBarTitleText": "首页",
 				"navigationStyle": "custom",
-				"navigationBarTextStyle": "white",
-				"enableShareAppMessage": true,
-				"enableShareTimeline": true
+				"navigationBarTextStyle": "white"
 			}
 		},
 		{
@@ -27,33 +26,29 @@
 		{
 			"path": "pages/tabbar/home/home",
 			"style": {
-				"navigationBarTitleText": "首页",
-				"enableShareAppMessage": true,
-				"enableShareTimeline": true
+				"navigationBarTitleText": "首页"
 			}
 		},
 		{
 			"path": "pages/tabbar/follow/follow",
 			"style": {
 				"navigationBarTitleText": "关注",
-				"enableShareAppMessage": true,
-				"enableShareTimeline": true
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black",
+				"enablePullDownRefresh": true,
+				"backgroundColor": "#f8f9fa"
 			}
 		},
 		{
 			"path": "pages/tabbar/release/release",
 			"style": {
-				"navigationBarTitleText": "发布",
-				"enableShareAppMessage": true,
-				"enableShareTimeline": true
+				"navigationBarTitleText": "发布"
 			}
 		},
 		{
 			"path": "pages/tabbar/info/info",
 			"style": {
-				"navigationBarTitleText": "消息",
-				"enableShareAppMessage": true,
-				"enableShareTimeline": true
+				"navigationBarTitleText": "消息"
 			}
 		},
 		{
@@ -61,8 +56,7 @@
 			"style": {
 				"navigationBarTitleText": "我的",
 				"navigationStyle": "custom",
-				"navigationBarTextStyle": "white",
-				"enableShareAppMessage": true
+				"navigationBarTextStyle": "white"
 			}
 		},
 		{
@@ -83,12 +77,11 @@
 			"path": "pages/postDetail/postDetail",
 			"style": {
 				"navigationStyle": "custom",
-				"enableShareAppMessage": true,
-				"enableShareTimeline": true,
 				"enablePullDownRefresh": true
 			}
 		}
 	],
+
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
 		"navigationBarTitleText": "uni-app",

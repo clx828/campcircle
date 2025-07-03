@@ -11,7 +11,7 @@
                     <CommentList :comment-list="commentList" @reply="handleReply" />
                 </view>
                 <view class="comment-input-wrapper">
-                    <CommentInput :placeholder="replyTo ? `回复 ${replyTo.userName}` : '说点什么...'" :reply-to="replyTo"
+                    <CommentInput :placeholder="replyTo ? `回复 ${replyTo.userName}` : '说点什么...'" :replyTo="replyTo"
                         :show="showCommentInput" @update:show="showCommentInput = $event" @submit="handleSubmit"
                         @close="handleClose" />
                 </view>
@@ -87,7 +87,6 @@ async function loadComments() {
         })
         if (res.code === 0) {
             commentList.value = res.data.records
-            commentTotal.value = res.data.total
         }
     } catch (error) {
         console.error('加载评论失败:', error)

@@ -8,8 +8,10 @@
             <view class="test-section">
                 <text class="section-title">测试说明：</text>
                 <text class="description">1. 点击输入框触发弹出层</text>
-                <text class="description">2. 测试图标按钮大小调整</text>
+                <text class="description">2. 测试发送按钮（有内容时send.png，无内容时send-none.png）</text>
                 <text class="description">3. 测试匿名/实名切换过渡效果</text>
+                <text class="description">4. 测试匿名模式暗黑主题切换（文字变白色系）</text>
+                <text class="description">5. 测试键盘弹出时弹出层位置适配</text>
             </view>
             
             <view class="comment-container">

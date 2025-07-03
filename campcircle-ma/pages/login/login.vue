@@ -254,14 +254,7 @@ const closeAuthModal = () => {
 // 跳转到首页
 const navigateToHome = () => {
     uni.reLaunch({
-        url: '/pages/layout/layout',
-        fail: (err) => {
-            console.error('页面跳转失败:', err)
-            uni.showToast({
-                title: '页面跳转失败',
-                icon: 'error'
-            })
-        }
+        url: '/pages/layout/layout'
     })
 }
 

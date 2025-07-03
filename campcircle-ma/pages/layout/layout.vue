@@ -22,7 +22,7 @@
         </wd-tabbar-item>
 
         <!-- 关注 -->
-        <wd-tabbar-item  title="关注">
+        <wd-tabbar-item :value="1" title="关注">
           <template v-if="activeTab !== 1" #icon>
             <wd-img round height="40rpx" width="40rpx" src="/static/img/tabbar/guanzhu.png" />
           </template>
@@ -32,9 +32,12 @@
         </wd-tabbar-item>
 
         <!-- 发布 -->
-        <wd-tabbar-item title="发布">
+        <wd-tabbar-item :value="2" title="发布">
           <template v-if="activeTab !== 2" #icon>
             <wd-img round height="40rpx" width="40rpx" src="/static/img/tabbar/add.png" />
+          </template>
+          <template v-else #icon>
+            <wd-img round height="40rpx" width="40rpx" src="/static/img/tabbar/addactive.png" />
           </template>
         </wd-tabbar-item>
 
@@ -49,7 +52,7 @@
         </wd-tabbar-item>
 
         <!-- 我的 -->
-        <wd-tabbar-item  title="我的">
+        <wd-tabbar-item :value="4" title="我的">
           <template v-if="activeTab !== 4" #icon>
             <wd-img round height="40rpx" width="40rpx" src="/static/img/tabbar/me.png" />
           </template>
@@ -102,12 +105,20 @@ const tabPages = ref([
 
 const handleChange = (index) => {
   uni.vibrateShort()
-  console.log("这是", index)
-  console.log('切换到tab:', tabPages.value[index.value].needLogin)
-  if (tabPages.value[index.value].needLogin) {
-    checkAuth()
+  console.log("切换到tab:", index)
+
+  // 确保index是数字
+  const tabIndex = typeof index === 'object' ? index.value : index
+
+  if (tabPages.value[tabIndex] && tabPages.value[tabIndex].needLogin) {
+    if (!checkAuth()) {
+      // 如果需要登录但用户未登录，不切换tab
+      return
+    }
   }
-  return
+
+  // 切换tab
+  activeTab.value = tabIndex
 }
 
 const checkAuth = () => {
@@ -116,11 +127,12 @@ const checkAuth = () => {
 
   if (!isLoggedIn) {
     uni.navigateTo({
-      url: '/pages/login/login'
+      url: '/pages/login/login?redirect=pages/layout/layout'
     })
+    return false
   }
 
-  return isLoggedIn
+  return true
 }
 
 // 配置小程序分享功能

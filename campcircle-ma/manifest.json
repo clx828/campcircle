@@ -51,17 +51,9 @@
                 "desc": "你的位置信息将用于小程序位置接口的效果展示"
             }
         },
-        "requiredBackgroundModes": [],
-        "disableScroll": false,
-        "backgroundFetch": {
-            "mode": "periodic",
-            "interval": 0
-        },
         "optimization": {
             "subPackages": true
-        },
-        "navigateToMiniProgramAppIdList": [],
-        "shareLocation": true
+        }
     },
     "vueVersion": "3"
 }

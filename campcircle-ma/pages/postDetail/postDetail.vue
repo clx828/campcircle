@@ -8,7 +8,7 @@
           <text v-else class="home-icon">⌂</text>
         </view>
         <view class="navbar-title">
-          <text>帖子详情</text>
+          <text class="title-text">帖子详情</text>
         </view>
         <view class="navbar-right">
           <view class="share-btn" @tap="handleShare">
@@ -38,25 +38,19 @@
       </view>
 
       <!-- 评论区 -->
-      <view class="comment-section" >
+      <view class="comment-section">
         <!-- 评论区头部 - 用户头像和评论输入框 -->
         <view class="comment-header">
           <view class="user-avatar">
             <image
-                :src="userStore.getUserInfo?.userAvatar || '/static/images/default-avatar.png'"
+                :src="userStore.getUserInfo?.userAvatar || '/static/button/default-avatar.png'"
                 class="avatar-img"
                 mode="aspectFill"
             />
           </view>
-          <!-- 评论输入框 -->
-          <view class="comment-input-container">
-            <CommentInput
-                :show="showInput"
-                :replyTo="replyInfo.isReply ? { userName: replyInfo.targetUser } : null"
-                @close="hideCommentInput"
-                @submit="handleCommentSubmit"
-            />
-          </view>
+          <button class="comment-btn" @tap="showCommentInput">
+            写评论
+          </button>
         </view>
 
         <!-- 评论列表 -->
@@ -68,6 +62,16 @@
         </view>
       </view>
     </scroll-view>
+
+    <!-- 评论输入框 - 移到页面级别 -->
+    <CommentInput
+        :show="showInput"
+        :replyTo="replyInfo.isReply ? { userName: replyInfo.targetUser } : null"
+        @close="hideCommentInput"
+        @submit="handleCommentSubmit"
+    />
+
+
   </view>
 </template>
 
@@ -377,7 +381,7 @@ const handleCommentSubmit = async (data: { content: string; isAnonymous: boolean
       flex: 1;
       text-align: center;
 
-      text {
+      .title-text {
         font-size: 32rpx;
         font-weight: 600;
         color: #333;
@@ -462,8 +466,22 @@ const handleCommentSubmit = async (data: { content: string; isAnonymous: boolean
     }
   }
 
-  .comment-input-container {
+  .comment-btn {
     flex: 1;
+    height: 72rpx;
+    background: #f8f9fa;
+    border: 1rpx solid #e9ecef;
+    border-radius: 36rpx;
+    font-size: 28rpx;
+    color: #999;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: 32rpx;
+
+    &:active {
+      background: #e9ecef;
+    }
   }
 }
 
@@ -489,4 +507,6 @@ const handleCommentSubmit = async (data: { content: string; isAnonymous: boolean
     color: #999;
   }
 }
+
+
 </style>
