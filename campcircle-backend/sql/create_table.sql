@@ -140,3 +140,59 @@ create table if not exists post_comment
 ) comment '评论' collate = utf8mb4_unicode_ci;
 alter table post_comment
     add column level tinyint default 1 not null comment '评论层级：1一级评论，2二级评论';
+
+use camp_circle;
+-- 私信消息表
+CREATE TABLE private_message
+(
+    id          BIGINT PRIMARY KEY AUTO_INCREMENT,
+    fromUserId  BIGINT NOT NULL COMMENT '发送者ID',
+    toUserId    BIGINT NOT NULL COMMENT '接收者ID',
+    content     TEXT COMMENT '消息内容',
+    messageType TINYINT  DEFAULT 0 COMMENT '消息类型:0文本,1图片',
+    pictureUrl  VARCHAR(500) COMMENT '图片URL',
+    isRead      TINYINT  DEFAULT 0 COMMENT '是否已读',
+    isRecalled  TINYINT  DEFAULT 0 COMMENT '是否已撤回:0否,1是',
+    createTime  DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updateTime  DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_from_to_time (fromUserId, toUserId, createTime),
+    INDEX idx_to_read (toUserId, isRead)
+);
+
+-- 系统通知表
+CREATE TABLE system_notification
+(
+    id               BIGINT PRIMARY KEY AUTO_INCREMENT,
+    title            VARCHAR(100) NOT NULL COMMENT '通知标题',
+    content          TEXT         NOT NULL COMMENT '通知内容',
+    notificationType TINYINT      NOT NULL COMMENT '通知类型:1点赞,2评论,3关注,4系统',
+    targetUserId     BIGINT COMMENT '目标用户ID(0表示全体用户)',
+    relatedId        BIGINT COMMENT '关联ID(帖子ID等)',
+    isRead           TINYINT  DEFAULT 0 COMMENT '是否已读',
+    createTime       DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+use camp_circle;
+CREATE TABLE `api_request_log`
+(
+    `id`             BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `traceId`        VARCHAR(64)  DEFAULT NULL COMMENT '链路追踪ID',
+    `requestMethod`  VARCHAR(10)     NOT NULL COMMENT '请求方式（GET/POST/PUT/DELETE）',
+    `requestUrl`     VARCHAR(255)    NOT NULL COMMENT '请求URI',
+    `requestParams`  TEXT COMMENT 'URL参数（GET）',
+    `requestBody`    LONGTEXT COMMENT '请求体内容（POST JSON等）',
+    `requestHeaders` TEXT COMMENT '请求头信息（JSON格式）',
+    `clientIp`       VARCHAR(45)  DEFAULT NULL COMMENT '客户端IP地址',
+    `userAgent`      VARCHAR(255) DEFAULT NULL COMMENT 'User-Agent信息',
+    `responseStatus` INT          DEFAULT NULL COMMENT '响应HTTP状态码',
+    `responseBody`   LONGTEXT COMMENT '响应内容（JSON）',
+    `exceptionInfo`  TEXT COMMENT '异常信息（如有）',
+    `durationMs`     INT          DEFAULT NULL COMMENT '请求耗时（毫秒）',
+    `userId`         BIGINT       DEFAULT NULL COMMENT '用户ID（如已登录）',
+    `createTime`     DATETIME     DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+
+    PRIMARY KEY (`id`),
+    INDEX `idx_uri_time` (`requestUrl`, `createTime`),
+    INDEX `idx_user_time` (`userId`, `createTime`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4 COMMENT ='接口请求日志表';

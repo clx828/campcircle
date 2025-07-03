@@ -106,3 +106,13 @@ knife4j:
           - com.caden.campcircle.controller
 jwt:
   secret: gsfsaddghIOHjiofjsafj989890dhfdiuijfsihifdsihmJJSPOkjd/.,fs/?09
+
+# RocketMQ 配置
+rocketmq:
+  name-server: localhost:9876
+  producer:
+    group: campcircle-producer-group
+    send-message-timeout: 3000
+    retry-times-when-send-failed: 3
+  consumer:
+    group: campcircle-consumer-group

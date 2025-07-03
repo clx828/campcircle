@@ -12,9 +12,11 @@ import com.caden.campcircle.model.entity.User;
 import com.caden.campcircle.model.vo.FansVO;
 import com.caden.campcircle.model.vo.FollowNum;
 import com.caden.campcircle.model.vo.FollowVO;
+import com.caden.campcircle.model.vo.PostVO;
 import com.caden.campcircle.service.FollowService;
 import com.caden.campcircle.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import net.bytebuddy.implementation.bytecode.Throw;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -127,5 +129,25 @@ public class FollowController {
         }
         FollowNum followNum = followService.getFollowNum(loginUser.getId());
         return ResultUtils.success(followNum);
+    }
+
+    /**
+     * 获取关注用户的帖子列表
+     *
+     * @param request
+     * @param pageRequest
+     * @return
+     */
+    @GetMapping("/my/follow/post/list")
+    public BaseResponse<Page<PostVO>> listMyFollowPost(PageRequest pageRequest, HttpServletRequest request) {
+        if (pageRequest == null || pageRequest.getCurrent() < 1 || pageRequest.getPageSize() < 1) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        if (pageRequest.getPageSize() > 100) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数错误，不能超过20条");
+        }
+        User loginUser = userService.getLoginUser(request);
+        Page<PostVO> result = followService.listMyFollowPost(pageRequest, request);
+        return ResultUtils.success(result);
     }
 }

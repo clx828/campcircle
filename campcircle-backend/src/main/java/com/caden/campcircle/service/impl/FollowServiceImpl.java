@@ -4,16 +4,16 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caden.campcircle.common.ErrorCode;
+import com.caden.campcircle.common.PageRequest;
 import com.caden.campcircle.exception.BusinessException;
 import com.caden.campcircle.mapper.FollowMapper;
-import com.caden.campcircle.model.entity.Follow;
-import com.caden.campcircle.model.entity.PostFavour;
-import com.caden.campcircle.model.entity.PostThumb;
-import com.caden.campcircle.model.entity.User;
+import com.caden.campcircle.model.entity.*;
 import com.caden.campcircle.model.vo.FansVO;
 import com.caden.campcircle.model.vo.FollowNum;
 import com.caden.campcircle.model.vo.FollowVO;
+import com.caden.campcircle.model.vo.PostVO;
 import com.caden.campcircle.service.FollowService;
+import com.caden.campcircle.service.PostService;
 import com.caden.campcircle.service.PostThumbService;
 import com.caden.campcircle.service.UserService;
 import org.springframework.beans.BeanUtils;
@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,6 +36,8 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
     private UserService userService;
     @Resource
     private PostThumbService postThumbService;
+    @Resource
+    private PostService postService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -165,5 +168,18 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
         followNum.setFansNum(this.count(new QueryWrapper<Follow>().eq("followUserId", id)));
         followNum.setThumbNum(postThumbService.count(new QueryWrapper<PostThumb>().eq("userId", id)));
         return followNum;
+    }
+
+    @Override
+    public Page<PostVO> listMyFollowPost(PageRequest pageRequest, HttpServletRequest request) {
+        //先获取所有的关注用户的 id
+        User loginUser = userService.getLoginUser(request);
+        List<Long> followUserIdList = this.list(new QueryWrapper<Follow>().eq("userId", loginUser.getId())).stream().map(Follow::getFollowUserId).collect(Collectors.toList());
+        if (followUserIdList.isEmpty()) {
+            return new Page<>();
+        }
+        Page<Post> postPage = postService.page(new Page<>(pageRequest.getCurrent(), pageRequest.getPageSize()), new QueryWrapper<Post>().in("userId", followUserIdList));
+        Page<PostVO> postVOList = postService.getPostVOPage(postPage, request);
+        return postVOList;
     }
 }
