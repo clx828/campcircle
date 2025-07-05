@@ -8,6 +8,9 @@ import com.caden.campcircle.model.entity.Picture;
 import com.caden.campcircle.model.vo.LoginUserVO;
 import com.caden.campcircle.service.PictureService;
 import com.caden.campcircle.service.UserService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,9 +21,15 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 
+/**
+ * 图片接口
+ *
+ * @author caden
+ */
 @RestController
 @RequestMapping("/picture")
 @Slf4j
+@Api(tags = "图片管理")
 public class PictureController {
     @Resource
     private PictureService pictureService;

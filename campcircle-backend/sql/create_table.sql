@@ -157,6 +157,7 @@ CREATE TABLE private_message
     updateTime  DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_from_to_time (fromUserId, toUserId, createTime),
     INDEX idx_to_read (toUserId, isRead)
+
 );
 
 -- 系统通知表
@@ -194,5 +195,11 @@ CREATE TABLE `api_request_log`
     PRIMARY KEY (`id`),
     INDEX `idx_uri_time` (`requestUrl`, `createTime`),
     INDEX `idx_user_time` (`userId`, `createTime`)
+
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='接口请求日志表';
+-- 添加发送者到接收者的联合索引
+ALTER TABLE private_message ADD INDEX idx_from_to (fromUserId, toUserId);
+
+-- 添加接收者到发送者的联合索引
+ALTER TABLE private_message ADD INDEX idx_to_from (toUserId, fromUserId);

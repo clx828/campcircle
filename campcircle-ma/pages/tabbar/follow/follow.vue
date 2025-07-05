@@ -1,9 +1,15 @@
 <template>
   <view class="follow-page">
-    <!-- 顶部导航栏 -->
-    <view class="navbar" :style="{ paddingTop: statusBarHeight + 'px' }">
-      <view class="navbar-content">
-        <text class="navbar-title">关注</text>
+    <!-- 头部标题栏 -->
+    <view class="header-bar" :style="{ paddingTop: statusBarHeight + 'px' }">
+      <view class="header-content">
+        <view class="title-section">
+          <text class="main-title">消息</text>
+          <text class="sub-title">发现你关注的精彩内容</text>
+        </view>
+        <!-- <view class="notification-badge" v-if="unreadCount > 0">
+           <text class="badge-count">{{ unreadCount > 99 ? '99+' : unreadCount }}</text>
+         </view> -->
       </view>
     </view>
 
@@ -226,29 +232,61 @@ onMounted(() => {
   background: #f8f9fa;
 }
 
-// 顶部导航栏
-.navbar {
+// 头部标题栏
+.header-bar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  background: #fff;
-  z-index: 1000;
-  border-bottom: 1rpx solid #eee;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
 
-  .navbar-content {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 44px;
-    padding: 0 30rpx;
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+  padding: 0 24rpx;
+}
 
-    .navbar-title {
-      font-size: 34rpx;
-      font-weight: 600;
-      color: #333;
-    }
-  }
+.title-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.main-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.2;
+}
+
+.sub-title {
+  font-size: 20rpx;
+  color: #64748b;
+  font-weight: 500;
+  margin-top: -4rpx;
+}
+
+.notification-badge {
+  width: 48rpx;
+  height: 48rpx;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 12rpx rgba(255, 107, 107, 0.3);
+}
+
+.badge-count {
+  color: white;
+  font-size: 20rpx;
+  font-weight: 700;
 }
 
 

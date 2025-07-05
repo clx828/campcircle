@@ -12,6 +12,9 @@ import com.caden.campcircle.model.entity.User;
 import com.caden.campcircle.model.vo.PostCommentVO;
 import com.caden.campcircle.service.PostCommentService;
 import com.caden.campcircle.service.UserService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,10 +24,12 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * 评论接口
  *
+ * @author caden
  */
 @RestController
 @RequestMapping("/post/comment")
 @Slf4j
+@Api(tags = "帖子评论管理")
 public class PostCommentController {
 
     @Resource

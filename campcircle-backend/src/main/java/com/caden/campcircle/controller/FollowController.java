@@ -15,6 +15,9 @@ import com.caden.campcircle.model.vo.FollowVO;
 import com.caden.campcircle.model.vo.PostVO;
 import com.caden.campcircle.service.FollowService;
 import com.caden.campcircle.service.UserService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import net.bytebuddy.implementation.bytecode.Throw;
 import org.springframework.web.bind.annotation.*;
@@ -25,10 +28,12 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * 关注接口
  *
+ * @author caden
  */
 @RestController
 @RequestMapping("/follow")
 @Slf4j
+@Api(tags = "关注管理")
 public class FollowController {
 
     @Resource
@@ -41,11 +46,12 @@ public class FollowController {
      * 关注/取消关注用户
      *
      * @param followUserId 被关注用户id
-     * @param request
-     * @return
+     * @param request HTTP请求
+     * @return 是否成功
      */
     @PostMapping("/")
-    public BaseResponse<Boolean> doFollow( @RequestParam Long followUserId, HttpServletRequest request) {
+    @ApiOperation(value = "关注/取消关注用户", notes = "关注或取消关注指定用户")
+    public BaseResponse<Boolean> doFollow(@RequestParam @ApiParam(value = "被关注用户ID", required = true) Long followUserId, HttpServletRequest request) {
         if (followUserId <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }

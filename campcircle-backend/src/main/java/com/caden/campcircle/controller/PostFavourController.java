@@ -15,6 +15,9 @@ import com. caden.campcircle.model.vo.PostVO;
 import com. caden.campcircle.service.PostFavourService;
 import com. caden.campcircle.service.PostService;
 import com. caden.campcircle.service.UserService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -26,11 +29,12 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * 帖子收藏接口
  *
- 
+ * @author caden
  */
 @RestController
 @RequestMapping("/post_favour")
 @Slf4j
+@Api(tags = "帖子收藏管理")
 public class PostFavourController {
 
     @Resource

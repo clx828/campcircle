@@ -24,6 +24,9 @@ import com. caden.campcircle.model.entity.User;
 import com. caden.campcircle.model.vo.LoginUserVO;
 import com. caden.campcircle.model.vo.UserVO;
 import com. caden.campcircle.service.UserService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 
 import java.util.List;
 import javax.annotation.Resource;
@@ -50,11 +53,12 @@ import static com. caden.campcircle.service.impl.UserServiceImpl.SALT;
 /**
  * 用户接口
  *
- 
+ * @author caden
  */
 @RestController
 @RequestMapping("/user")
 @Slf4j
+@Api(tags = "用户管理")
 public class UserController {
 
     @Resource
@@ -70,11 +74,12 @@ public class UserController {
     /**
      * 用户注册
      *
-     * @param userRegisterRequest
-     * @return
+     * @param userRegisterRequest 用户注册请求
+     * @return 用户ID
      */
     @PostMapping("/register")
-    public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
+    @ApiOperation(value = "用户注册", notes = "用户通过账号密码注册")
+    public BaseResponse<Long> userRegister(@RequestBody @ApiParam(value = "用户注册信息", required = true) UserRegisterRequest userRegisterRequest) {
         if (userRegisterRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -91,12 +96,13 @@ public class UserController {
     /**
      * 用户登录
      *
-     * @param userLoginRequest
-     * @param request
-     * @return
+     * @param userLoginRequest 用户登录请求
+     * @param request HTTP请求
+     * @return 登录用户信息
      */
     @PostMapping("/login")
-    public BaseResponse<LoginUserVO> userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request) {
+    @ApiOperation(value = "用户登录", notes = "用户通过账号密码登录")
+    public BaseResponse<LoginUserVO> userLogin(@RequestBody @ApiParam(value = "用户登录信息", required = true) UserLoginRequest userLoginRequest, HttpServletRequest request) {
         if (userLoginRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -111,9 +117,16 @@ public class UserController {
 
     /**
      * 用户登录（微信开放平台）
+     *
+     * @param request HTTP请求
+     * @param response HTTP响应
+     * @param code 微信授权码
+     * @return 登录用户信息
      */
     @GetMapping("/login/wx_open")
-    public BaseResponse<LoginUserVO> userLoginByWxOpen(HttpServletRequest request, HttpServletResponse response, @RequestParam("code") String code) {
+    @ApiOperation(value = "微信开放平台登录", notes = "通过微信开放平台授权登录")
+    public BaseResponse<LoginUserVO> userLoginByWxOpen(HttpServletRequest request, HttpServletResponse response,
+                                                       @RequestParam("code") @ApiParam(value = "微信授权码", required = true) String code) {
         WxOAuth2AccessToken accessToken;
         try {
             WxMpService wxService = wxOpenConfig.getWxMpService();
@@ -131,8 +144,17 @@ public class UserController {
         }
     }
 
+    /**
+     * 用户登录（微信小程序）
+     *
+     * @param request HTTP请求
+     * @param code 微信小程序授权码
+     * @return 登录用户信息
+     */
     @GetMapping("/login/wx_miniapp")
-    public BaseResponse<LoginUserVO> userLoginByWxMiniapp(HttpServletRequest request,@RequestParam("code") String code) throws WxErrorException {
+    @ApiOperation(value = "微信小程序登录", notes = "通过微信小程序授权登录")
+    public BaseResponse<LoginUserVO> userLoginByWxMiniapp(HttpServletRequest request,
+                                                          @RequestParam("code") @ApiParam(value = "微信小程序授权码", required = true) String code) throws WxErrorException {
         log.info("code = {}", code);
         WxMaService wxMaService = wxMaConfiguration.getWxMaService();
         WxMaJscode2SessionResult session = wxMaService.getUserService().getSessionInfo(code);
@@ -147,10 +169,11 @@ public class UserController {
     /**
      * 用户注销
      *
-     * @param request
-     * @return
+     * @param request HTTP请求
+     * @return 是否成功
      */
     @PostMapping("/logout")
+    @ApiOperation(value = "用户注销", notes = "用户退出登录")
     public BaseResponse<Boolean> userLogout(HttpServletRequest request) {
         if (request == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -162,10 +185,11 @@ public class UserController {
     /**
      * 获取当前登录用户
      *
-     * @param request
-     * @return
+     * @param request HTTP请求
+     * @return 当前登录用户信息
      */
     @GetMapping("/get/login")
+    @ApiOperation(value = "获取当前登录用户", notes = "获取当前登录用户的详细信息")
     public BaseResponse<LoginUserVO> getLoginUser(HttpServletRequest request) {
         User user = userService.getLoginUser(request);
         return ResultUtils.success(userService.getLoginUserVO(user));
@@ -178,13 +202,14 @@ public class UserController {
     /**
      * 创建用户
      *
-     * @param userAddRequest
-     * @param request
-     * @return
+     * @param userAddRequest 用户创建请求
+     * @param request HTTP请求
+     * @return 用户ID
      */
     @PostMapping("/add")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Long> addUser(@RequestBody UserAddRequest userAddRequest, HttpServletRequest request) {
+    @ApiOperation(value = "创建用户", notes = "管理员创建新用户（默认密码：12345678）")
+    public BaseResponse<Long> addUser(@RequestBody @ApiParam(value = "用户创建信息", required = true) UserAddRequest userAddRequest, HttpServletRequest request) {
         if (userAddRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -202,13 +227,14 @@ public class UserController {
     /**
      * 删除用户
      *
-     * @param deleteRequest
-     * @param request
-     * @return
+     * @param deleteRequest 删除请求
+     * @param request HTTP请求
+     * @return 是否成功
      */
     @PostMapping("/delete")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> deleteUser(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
+    @ApiOperation(value = "删除用户", notes = "管理员删除指定用户")
+    public BaseResponse<Boolean> deleteUser(@RequestBody @ApiParam(value = "删除用户信息", required = true) DeleteRequest deleteRequest, HttpServletRequest request) {
         if (deleteRequest == null || deleteRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -219,13 +245,14 @@ public class UserController {
     /**
      * 更新用户
      *
-     * @param userUpdateRequest
-     * @param request
-     * @return
+     * @param userUpdateRequest 用户更新请求
+     * @param request HTTP请求
+     * @return 是否成功
      */
     @PostMapping("/update")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> updateUser(@RequestBody UserUpdateRequest userUpdateRequest,
+    @ApiOperation(value = "更新用户", notes = "管理员更新用户信息")
+    public BaseResponse<Boolean> updateUser(@RequestBody @ApiParam(value = "用户更新信息", required = true) UserUpdateRequest userUpdateRequest,
             HttpServletRequest request) {
         if (userUpdateRequest == null || userUpdateRequest.getId() == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -240,13 +267,14 @@ public class UserController {
     /**
      * 根据 id 获取用户（仅管理员）
      *
-     * @param id
-     * @param request
-     * @return
+     * @param id 用户ID
+     * @param request HTTP请求
+     * @return 用户信息
      */
     @GetMapping("/get")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<User> getUserById(long id, HttpServletRequest request) {
+    @ApiOperation(value = "根据ID获取用户", notes = "管理员根据用户ID获取用户详细信息")
+    public BaseResponse<User> getUserById(@ApiParam(value = "用户ID", required = true) long id, HttpServletRequest request) {
         if (id <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -258,12 +286,13 @@ public class UserController {
     /**
      * 根据 id 获取包装类
      *
-     * @param id
-     * @param request
-     * @return
+     * @param id 用户ID
+     * @param request HTTP请求
+     * @return 用户包装类
      */
     @GetMapping("/get/vo")
-    public BaseResponse<UserVO> getUserVOById(long id, HttpServletRequest request) {
+    @ApiOperation(value = "根据ID获取用户包装类", notes = "获取用户的脱敏信息")
+    public BaseResponse<UserVO> getUserVOById(@ApiParam(value = "用户ID", required = true) long id, HttpServletRequest request) {
         BaseResponse<User> response = getUserById(id, request);
         User user = response.getData();
         return ResultUtils.success(userService.getUserVO(user));
@@ -272,13 +301,14 @@ public class UserController {
     /**
      * 分页获取用户列表（仅管理员）
      *
-     * @param userQueryRequest
-     * @param request
-     * @return
+     * @param userQueryRequest 用户查询请求
+     * @param request HTTP请求
+     * @return 用户分页列表
      */
     @PostMapping("/list/page")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Page<User>> listUserByPage(@RequestBody UserQueryRequest userQueryRequest,
+    @ApiOperation(value = "分页获取用户列表", notes = "管理员分页查询用户列表")
+    public BaseResponse<Page<User>> listUserByPage(@RequestBody @ApiParam(value = "用户查询条件", required = true) UserQueryRequest userQueryRequest,
             HttpServletRequest request) {
         long current = userQueryRequest.getCurrent();
         long size = userQueryRequest.getPageSize();
@@ -290,12 +320,13 @@ public class UserController {
     /**
      * 分页获取用户封装列表
      *
-     * @param userQueryRequest
-     * @param request
-     * @return
+     * @param userQueryRequest 用户查询请求
+     * @param request HTTP请求
+     * @return 用户包装类分页列表
      */
     @PostMapping("/list/page/vo")
-    public BaseResponse<Page<UserVO>> listUserVOByPage(@RequestBody UserQueryRequest userQueryRequest,
+    @ApiOperation(value = "分页获取用户封装列表", notes = "分页查询用户脱敏信息列表")
+    public BaseResponse<Page<UserVO>> listUserVOByPage(@RequestBody @ApiParam(value = "用户查询条件", required = true) UserQueryRequest userQueryRequest,
             HttpServletRequest request) {
         if (userQueryRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -317,12 +348,13 @@ public class UserController {
     /**
      * 更新个人信息
      *
-     * @param userUpdateMyRequest
-     * @param request
-     * @return
+     * @param userUpdateMyRequest 个人信息更新请求
+     * @param request HTTP请求
+     * @return 是否成功
      */
     @PostMapping("/update/my")
-    public BaseResponse<Boolean> updateMyUser(@RequestBody UserUpdateMyRequest userUpdateMyRequest,
+    @ApiOperation(value = "更新个人信息", notes = "用户更新自己的个人信息")
+    public BaseResponse<Boolean> updateMyUser(@RequestBody @ApiParam(value = "个人信息更新", required = true) UserUpdateMyRequest userUpdateMyRequest,
             HttpServletRequest request) {
         if (userUpdateMyRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);

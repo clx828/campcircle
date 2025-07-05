@@ -17,12 +17,11 @@
         <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
     </resultMap>
 
-    <resultMap id="ChatListResultMap" type="com.caden.campcircle.model.vo.ChatListVO">
-        <result property="chatUserId" column="chat_user_id" jdbcType="BIGINT"/>
-        <result property="lastMessageContent" column="last_message_content" jdbcType="VARCHAR"/>
-        <result property="lastMessageType" column="last_message_type" jdbcType="TINYINT"/>
-        <result property="lastMessageTime" column="last_message_time" jdbcType="TIMESTAMP"/>
-        <result property="unreadCount" column="unread_count" jdbcType="INTEGER"/>
+    <resultMap id="ChatListResultMap" type="com.caden.campcircle.model.vo.LastMessage">
+        <result property="content" column="content" jdbcType="BIGINT"/>
+        <result property="messageType" column="messageType" jdbcType="VARCHAR"/>
+        <result property="isRecalled" column="isRecalled" jdbcType="TINYINT"/>
+        <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -30,65 +29,49 @@
     </sql>
 
     <!-- 获取用户的聊天列表 -->
-    <select id="getChatList" resultMap="ChatListResultMap">
-        SELECT 
-            chat_user_id,
-            last_message_content,
-            last_message_type,
-            last_message_time,
-            COALESCE(unread_count, 0) as unread_count
-        FROM (
-            SELECT 
-                CASE 
-                    WHEN from_user_id = #{userId} THEN to_user_id 
-                    ELSE from_user_id 
-                END as chat_user_id,
-                content as last_message_content,
-                message_type as last_message_type,
-                create_time as last_message_time,
-                ROW_NUMBER() OVER (
-                    PARTITION BY CASE 
-                        WHEN from_user_id = #{userId} THEN to_user_id 
-                        ELSE from_user_id 
-                    END 
-                    ORDER BY create_time DESC
-                ) as rn
-            FROM private_message 
-            WHERE (from_user_id = #{userId} OR to_user_id = #{userId})
-              AND is_recalled = 0
-        ) latest_messages
-        LEFT JOIN (
-            SELECT 
-                from_user_id as chat_user_id,
-                COUNT(*) as unread_count
-            FROM private_message 
-            WHERE to_user_id = #{userId} 
-              AND is_read = 0 
-              AND is_recalled = 0
-            GROUP BY from_user_id
-        ) unread_counts ON latest_messages.chat_user_id = unread_counts.chat_user_id
-        WHERE rn = 1
-        ORDER BY last_message_time DESC
-    </select>
+
 
     <!-- 获取两个用户之间的未读消息数量 -->
-    <select id="getUnreadCount" resultType="java.lang.Integer">
+    <select id="getUnreadCountByUser" resultType="java.lang.Long">
         SELECT COUNT(*)
         FROM private_message
-        WHERE from_user_id = #{fromUserId}
-          AND to_user_id = #{toUserId}
-          AND is_read = 0
-          AND is_recalled = 0
+        WHERE fromUserId = #{fromUserId}
+          AND toUserId = #{toUserId}
+          AND isRead = 0
     </select>
+    <select id="getChatUserIdList" resultType="java.lang.Long" parameterType="java.lang.Long">
+        SELECT DISTINCT toUserId as chat_user_id
+        FROM private_message
+        WHERE fromUserId = #{userId}
 
+        UNION
+
+        SELECT DISTINCT fromUserId as chat_user_id
+        FROM private_message
+        WHERE toUserId = #{userId}
+    </select>
+    <select id="getLatestMessage" resultType="com.caden.campcircle.model.vo.LastMessage">
+        SELECT content, messageType,isRecalled, createTime
+        FROM private_message
+        WHERE (fromUserId = #{currentUserId} AND toUserId = #{chatUserId})
+           OR (fromUserId = #{chatUserId} AND toUserId = #{currentUserId})
+        ORDER BY createTime DESC
+        LIMIT 1
+    </select>
+    <select id="getAllUnreadCount" resultType="java.lang.Long" parameterType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM private_message
+        WHERE toUserId = #{userId}
+          AND isRead = 0
+    </select>
     <!-- 标记消息为已读 -->
     <update id="markAsRead">
         UPDATE private_message
-        SET is_read = 1, update_time = NOW()
-        WHERE from_user_id = #{fromUserId}
-          AND to_user_id = #{toUserId}
-          AND is_read = 0
-          AND is_recalled = 0
+        SET isRead = 1, updateTime = NOW()
+        WHERE fromUserId = #{fromUserId}
+          AND toUserId = #{toUserId}
+          AND isRead = 0
+          AND isRecalled = 0
     </update>
 
 </mapper>

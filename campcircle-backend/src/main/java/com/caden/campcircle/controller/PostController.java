@@ -20,6 +20,9 @@ import com.caden.campcircle.model.vo.MyPostNumVO;
 import com.caden.campcircle.model.vo.PostVO;
 import com.caden.campcircle.service.PostService;
 import com.caden.campcircle.service.UserService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import java.util.List;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -30,11 +33,12 @@ import org.springframework.web.bind.annotation.*;
 /**
  * 帖子接口
  *
- 
+ * @author caden
  */
 @RestController
 @RequestMapping("/post")
 @Slf4j
+@Api(tags = "帖子管理")
 public class PostController {
 
     @Resource
