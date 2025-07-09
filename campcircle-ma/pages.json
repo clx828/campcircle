@@ -3,7 +3,8 @@
 		"autoscan": true,
 		"custom": {
 			"^wd-(.*)": "wot-design-uni/components/wd-$1/wd-$1.vue",
-			"^CommentInput$": "@/components/CommentInput.vue"
+			"^CommentInput$": "@/components/CommentInput.vue",
+			"^ChatInput$": "@/components/ChatInput.vue"
 		}
 	},
 	"pages": [
@@ -78,6 +79,20 @@
 			"style": {
 				"navigationStyle": "custom",
 				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/chatDetail/chatDetail",
+			"style": {
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/editProfile/editProfile",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTextStyle": "black"
 			}
 		}
 	],

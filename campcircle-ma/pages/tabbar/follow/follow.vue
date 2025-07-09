@@ -4,7 +4,7 @@
     <view class="header-bar" :style="{ paddingTop: statusBarHeight + 'px' }">
       <view class="header-content">
         <view class="title-section">
-          <text class="main-title">消息</text>
+          <text class="main-title">关注</text>
           <text class="sub-title">发现你关注的精彩内容</text>
         </view>
         <!-- <view class="notification-badge" v-if="unreadCount > 0">

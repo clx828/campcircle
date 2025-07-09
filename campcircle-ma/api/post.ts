@@ -37,6 +37,24 @@ export interface DoPostFavourParams {
     postId: string;
 }
 
+export interface DeletePostParams {
+    /* */
+    id?: string;
+}
+// 参数接口
+export interface EditPostParams {
+    /* */
+    content?: string;
+
+    /* */
+    id?: number;
+
+    /* */
+    pictureList?: Record<string, unknown>[];
+
+    /* */
+    tags?: Record<string, unknown>[];
+}
 // 用户相关API
 export const postApi = {
 
@@ -92,5 +110,13 @@ export const postApi = {
     // 根据ID获取帖子详情
     getPostById(id: string | number) {
         return request.get(`/post/get/vo/?id=${id}`)
+    },
+    deletePost(deletePostParams: DeletePostParams) {
+        return request.post(`/api/post/delete`, deletePostParams);
+    },
+
+    editPost(editPostParams:EditPostParams) {
+    return request.post(`/api/post/edit`, editPostParams);
     }
+
 }

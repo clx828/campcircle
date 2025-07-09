@@ -116,10 +116,10 @@ const formatMessageTime = (createTime: Record<string, unknown> | string) => {
     if (typeof createTime === 'object' && createTime !== null) {
       const timeValue = createTime.time || createTime.timestamp || createTime.value || Object.values(createTime)[0]
       if (timeValue) {
-        return formatTime(String(timeValue))
+        return formatTime(timeValue)
       }
     }
-    return formatTime(String(createTime))
+    return formatTime(createTime)
   } catch (error) {
     console.error('时间格式化失败:', error)
     return '刚刚'
@@ -160,131 +160,25 @@ const getMessageTypeIcon = (messageType: number) => {
   }
 }
 
-// 生成测试数据
-const generateTestData = () => {
-  return [
-    {
-      chatUserId: 1,
-      chatUser: {
-        id: 1,
-        userName: '张同学',
-        userAvatar: 'https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png',
-        userProfile: '计算机科学与技术专业',
-        userRole: 'user',
-        createTime: new Date()
-      },
-      lastMessage: {
-        content: '今天的作业你做完了吗？',
-        createTime: new Date(Date.now() - 1000 * 60 * 30),
-        isRecalled: 0,
-        messageType: 1
-      },
-      unreadCount: 2
-    },
-    {
-      chatUserId: 2,
-      chatUser: {
-        id: 2,
-        userName: '李老师',
-        userAvatar: 'https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png',
-        userProfile: '数学系教授',
-        userRole: 'user',
-        createTime: new Date()
-      },
-      lastMessage: {
-        content: '明天的课程安排已发布',
-        createTime: new Date(Date.now() - 1000 * 60 * 60 * 2),
-        isRecalled: 0,
-        messageType: 1
-      },
-      unreadCount: 1
-    },
-    {
-      chatUserId: 3,
-      chatUser: {
-        id: 3,
-        userName: '王室友',
-        userAvatar: 'https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png',
-        userProfile: '同宿舍室友',
-        userRole: 'user',
-        createTime: new Date()
-      },
-      lastMessage: {
-        content: '[图片]',
-        createTime: new Date(Date.now() - 1000 * 60 * 60 * 5),
-        isRecalled: 0,
-        messageType: 2
-      },
-      unreadCount: 0
-    },
-    {
-      chatUserId: 4,
-      chatUser: {
-        id: 4,
-        userName: '校园助手',
-        userAvatar: 'https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png',
-        userProfile: '校园服务机器人',
-        userRole: 'admin',
-        createTime: new Date()
-      },
-      lastMessage: {
-        content: '您有一条新的校园通知',
-        createTime: new Date(Date.now() - 1000 * 60 * 60 * 24),
-        isRecalled: 0,
-        messageType: 1
-      },
-      unreadCount: 0
-    },
-    {
-      chatUserId: 5,
-      chatUser: {
-        id: 5,
-        userName: '学习小组',
-        userAvatar: 'https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png',
-        userProfile: '算法学习小组',
-        userRole: 'user',
-        createTime: new Date()
-      },
-      lastMessage: {
-        content: '这条消息已被撤回',
-        createTime: new Date(Date.now() - 1000 * 60 * 60 * 48),
-        isRecalled: 1,
-        messageType: 1
-      },
-      unreadCount: 0
-    }
-  ]
-}
+
 
 // 加载消息列表
 const loadChatList = async () => {
   try {
     loading.value = true
 
-    try {
-      const res = await messageApi.getChatList()
-      if (res.code === 0) {
-        chatList.value = res.data || []
-        unreadCount.value = chatList.value.reduce((total, chat) => total + chat.unreadCount, 0)
-      } else {
-        throw new Error(res.message || '获取消息列表失败')
-      }
-    } catch (apiError) {
-      console.warn('API调用失败，使用测试数据:', apiError)
-      chatList.value = generateTestData()
+    const res = await messageApi.getChatList()
+    if (res.code === 0) {
+      chatList.value = res.data || []
       unreadCount.value = chatList.value.reduce((total, chat) => total + chat.unreadCount, 0)
-      uni.showToast({
-        title: '当前为演示模式',
-        icon: 'none',
-        duration: 2000
-      })
+    } else {
+      throw new Error(res.message || '获取消息列表失败')
     }
   } catch (error) {
     console.error('加载消息列表失败:', error)
-    chatList.value = generateTestData()
-    unreadCount.value = chatList.value.reduce((total, chat) => total + chat.unreadCount, 0)
+
     uni.showToast({
-      title: '当前为演示模式',
+      title: error.message || '加载失败',
       icon: 'none'
     })
   } finally {
@@ -302,10 +196,11 @@ const onRefresh = () => {
 // 点击聊天项
 const handleChatClick = (chat: any) => {
   uni.vibrateShort()
-  uni.showToast({
-    title: `查看与 ${chat.chatUser.userName} 的聊天`,
-    icon: 'none',
-    duration: 1500
+
+  // 跳转到聊天详情页面，传递聊天用户信息
+  const chatUserParam = encodeURIComponent(JSON.stringify(chat.chatUser))
+  uni.navigateTo({
+    url: `/pages/chatDetail/chatDetail?chatUser=${chatUserParam}&chatUserId=${chat.chatUserId}`
   })
 }
 
@@ -362,7 +257,7 @@ onShareTimeline(() => {
 .message-container {
   width: 100%;
   height: 100vh;
-  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+  background: #f8f9fa;
   overflow: hidden;
 }
 
@@ -373,9 +268,9 @@ onShareTimeline(() => {
   left: 0;
   right: 0;
   z-index: 100;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  background: #ffffff;
+  border-bottom: 1rpx solid #f0f0f0;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
 }
 
 .header-content {
@@ -393,17 +288,17 @@ onShareTimeline(() => {
 }
 
 .main-title {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: #1e293b;
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #333333;
   line-height: 1.2;
 }
 
 .sub-title {
   font-size: 20rpx;
-  color: #64748b;
-  font-weight: 500;
-  margin-top: -4rpx;
+  color: #999999;
+  font-weight: 400;
+  margin-top: -2rpx;
 }
 
 .notification-badge {

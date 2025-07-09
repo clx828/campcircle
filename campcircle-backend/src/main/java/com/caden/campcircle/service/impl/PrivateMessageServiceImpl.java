@@ -182,7 +182,20 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
                 .collect(Collectors.toList());
 
         Page<PrivateMessageVO> privateMessageVOPage = new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
-        return privateMessageVOPage.setRecords(privateMessageVOList);
+        privateMessageVOPage.setRecords(privateMessageVOList);
+
+        // 将对方发送给当前用户的未读消息标记为已读
+        UpdateWrapper<PrivateMessage> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.eq("fromUserId", privateMessageQueryRequest.getChatUserId())
+                .eq("toUserId", loginUser.getId())
+                .eq("isRead", MessageConstant.MESSAGE_UNREAD)
+                .set("isRead", MessageConstant.MESSAGE_READ);
+        this.update(updateWrapper);
+
+        log.info("用户 {} 查看与用户 {} 的聊天记录，已将未读消息标记为已读",
+                loginUser.getId(), privateMessageQueryRequest.getChatUserId());
+
+        return privateMessageVOPage;
 
     }
 }

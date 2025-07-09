@@ -12,6 +12,10 @@
                 <button v-if="cardInfo.hasFollow && cardInfo.user.id !== userStore.getUserInfo?.id" class="followed-btn"
                     hover-class="followed-btn-hover" @click="handleFollow">已关注</button>
             </view>
+          <view class="edit">
+                <button v-if="cardInfo.user.id === userStore.getUserInfo?.id" class="follow-btn"
+                    hover-class="follow-btn-hover" @click="handleFollow">···</button>
+            </view>
         </view>
         <view class="content-text" @tap="handleContentClick">{{ cardInfo.content }}</view>
         <view v-if="cardInfo.pictureUrlList && cardInfo.pictureUrlList.length > 0" class="image-list"

@@ -92,7 +92,122 @@ export interface GetChatListRes {
 	/* */
 	message: string;
 }
+// 响应接口
+export interface GetChatHistoryRes {
+	/* */
+	code: number;
 
+	/* */
+	data: {
+		/* */
+		countId: string;
+
+		/* */
+		current: number;
+
+		/* */
+		maxLimit: number;
+
+		/* */
+		optimizeCountSql: boolean;
+
+		/* */
+		orders: {
+			/* */
+			asc: boolean;
+
+			/* */
+			column: string;
+		}[];
+
+		/* */
+		pages: number;
+
+		/* */
+		records: {
+			/* */
+			content: string;
+
+			/* */
+			createTime: Record<string, unknown>;
+
+			/* */
+			fromUser: {
+				/* */
+				createTime: Record<string, unknown>;
+
+				/* */
+				id: number;
+
+				/* */
+				userAvatar: string;
+
+				/* */
+				userName: string;
+
+				/* */
+				userProfile: string;
+
+				/* */
+				userRole: string;
+			};
+
+			/* */
+			fromUserId: number;
+
+			/* */
+			id: number;
+
+			/* */
+			isRead: number;
+
+			/* */
+			isRecalled: number;
+
+			/* */
+			messageType: number;
+
+			/* */
+			pictureUrl: string;
+
+			/* */
+			toUser: {
+				/* */
+				createTime: Record<string, unknown>;
+
+				/* */
+				id: number;
+
+				/* */
+				userAvatar: string;
+
+				/* */
+				userName: string;
+
+				/* */
+				userProfile: string;
+
+				/* */
+				userRole: string;
+			};
+
+			/* */
+			toUserId: number;
+		}[];
+
+		/* */
+		searchCount: boolean;
+
+		/* */
+		size: number;
+
+		/* */
+		total: number;
+	};
+
+	/* */
+	message: string;
+}
 
 // 私信相关API
 export const messageApi = {
@@ -103,7 +218,7 @@ export const messageApi = {
 	},
 	//发送消息
 	sendMessage(sendMessageParams : SendMessageParams){
-		 return request.post(`/api/message/send`, sendMessageParams);
+		 return request.post('/message/send', sendMessageParams);
 	},
 	//撤回消息
 	recallMessage(id : number){

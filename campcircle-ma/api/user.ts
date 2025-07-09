@@ -16,6 +16,28 @@ interface UpdateUserParams {
     userName?: string
     userAvatar?: string
 }
+export interface UpdateMyUserParams {
+  /* */
+  userAvatar?: string;
+
+  /* */
+  userName?: string;
+
+  /* */
+  userProfile?: string;
+}
+
+// 响应接口
+export interface UpdateMyUserRes {
+  /* */
+  code: number;
+
+  /* */
+  data: boolean;
+
+  /* */
+  message: string;
+}
 
 // 用户相关API
 export const userApi = {
@@ -50,5 +72,9 @@ export const userApi = {
     // 退出登录
     logout() {
         return request.post('/user/logout')
-    }
+    },
+	//更新资料
+	updateMyUser(updateMyUserParams :UpdateMyUserParams){
+		return request.post('/user/update/my',updateMyUserParams)
+	}
 } 

@@ -83,6 +83,7 @@ import CommentList from '@/components/CommentList.vue'
 import { postApi } from '@/api/post'
 import { postCommentApi } from '@/api/postComment'
 import { useUserStore } from '@/stores/userStore'
+import { createCompatibleDate } from '@/utils/format'
 
 // 页面参数
 const postId = ref('')
@@ -111,22 +112,28 @@ const userStore = useUserStore()
 // 格式化时间显示（相对时间）
 const formatTime = (time: string) => {
   if (!time) return ''
-  const date = new Date(time)
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
 
-  const minute = 60 * 1000
-  const hour = 60 * minute
-  const day = 24 * hour
+  try {
+    const date = createCompatibleDate(time)
+    const now = new Date()
+    const diff = now.getTime() - date.getTime()
 
-  if (diff < minute) {
+    const minute = 60 * 1000
+    const hour = 60 * minute
+    const day = 24 * hour
+
+    if (diff < minute) {
+      return '刚刚'
+    } else if (diff < hour) {
+      return Math.floor(diff / minute) + '分钟前'
+    } else if (diff < day) {
+      return Math.floor(diff / hour) + '小时前'
+    } else {
+      return Math.floor(diff / day) + '天前'
+    }
+  } catch (error) {
+    console.error('时间格式化失败:', error)
     return '刚刚'
-  } else if (diff < hour) {
-    return Math.floor(diff / minute) + '分钟前'
-  } else if (diff < day) {
-    return Math.floor(diff / hour) + '小时前'
-  } else {
-    return Math.floor(diff / day) + '天前'
   }
 }
 

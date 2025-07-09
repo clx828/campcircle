@@ -50,7 +50,7 @@
             <!-- 操作按钮 -->
             <wd-col :span="8" :offset="4">
               <view class="action-buttons">
-                <wd-button plain hairline size="small" type="info" class="edit-profile-btn">
+                <wd-button plain hairline size="small" type="info" class="edit-profile-btn" @click="goToEditProfile">
                   编辑资料
                 </wd-button>
                 <wd-button plain size="small" icon="setting" type="info" class="settings-btn" />
@@ -373,9 +373,10 @@ const onScroll = (e: any) => {
 // 使用节流的滚动监听
 const onScrollThrottled = throttle(onScroll, 16)
 
-const handleAvatarChange = (file: any) => {
+const handleAvatarChange = () => {
   uni.vibrateShort()
-  console.log("头像变更：", file)
+  // 点击头像也跳转到编辑资料页面
+  uni.navigateTo({ url: '/pages/editProfile/editProfile' })
 }
 
 // ===== 响应式数据 =====
@@ -402,6 +403,12 @@ const goToFollowList = () => {
 const goToFansList = () => {
   uni.vibrateShort()
   uni.navigateTo({ url: '/pages/followList/followList?type=fans' })
+}
+
+// 跳转到编辑资料页面
+const goToEditProfile = () => {
+  uni.vibrateShort()
+  uni.navigateTo({ url: '/pages/editProfile/editProfile' })
 }
 
 const showThumb = ref(false)

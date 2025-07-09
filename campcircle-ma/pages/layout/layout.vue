@@ -12,7 +12,7 @@
       <wd-tabbar v-model="activeTab" @change="handleChange" active-color="#ee0a24" inactive-color="#7d7e80">
         <!-- 首页 -->
 
-        <wd-tabbar-item :value="0" title="首页">
+        <wd-tabbar-item title="首页">
           <template v-if="activeTab !== 0" #icon>
             <wd-img round height="40rpx" width="40rpx" src="/static/img/tabbar/home.png" />
           </template>
@@ -22,7 +22,7 @@
         </wd-tabbar-item>
 
         <!-- 关注 -->
-        <wd-tabbar-item :value="1" title="关注">
+        <wd-tabbar-item  title="关注">
           <template v-if="activeTab !== 1" #icon>
             <wd-img round height="40rpx" width="40rpx" src="/static/img/tabbar/guanzhu.png" />
           </template>
@@ -32,7 +32,7 @@
         </wd-tabbar-item>
 
         <!-- 发布 -->
-        <wd-tabbar-item :value="2" title="发布">
+        <wd-tabbar-item  title="发布">
           <template v-if="activeTab !== 2" #icon>
             <wd-img round height="40rpx" width="40rpx" src="/static/img/tabbar/add.png" />
           </template>
@@ -42,7 +42,7 @@
         </wd-tabbar-item>
 
         <!-- 消息 -->
-        <wd-tabbar-item :value="3" title="消息">
+        <wd-tabbar-item :value="unReadCount" title="消息">
           <template v-if="activeTab !== 3" #icon>
             <wd-img round height="40rpx" width="40rpx" src="/static/img/tabbar/news.png" />
           </template>
@@ -52,7 +52,7 @@
         </wd-tabbar-item>
 
         <!-- 我的 -->
-        <wd-tabbar-item :value="4" title="我的">
+        <wd-tabbar-item  title="我的">
           <template v-if="activeTab !== 4" #icon>
             <wd-img round height="40rpx" width="40rpx" src="/static/img/tabbar/me.png" />
           </template>
@@ -66,18 +66,19 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import {onMounted, ref} from 'vue'
 import Home from '/pages/tabbar/home/home.vue'
 import Follow from '/pages/tabbar/follow/follow.vue'
 import Publish from '/pages/tabbar/release/release.vue'
 import Info from '/pages/tabbar/info/info.vue'
 import Mine from '/pages/tabbar/mine/mine.vue'
 import { useUserStore } from '@/stores/userStore'
-import { onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app'
-
+import { onShow, onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app'
+import {messageApi} from '@/api/message'
 
 const activeTab = ref(0)
 const userStore = useUserStore()
+const unReadCount = ref(0)
 const tabPages = ref([
   {
     path: '/pages/tabbar/home/home',
@@ -101,7 +102,28 @@ const tabPages = ref([
   }
 ])
 
+const getUnReadCount = async() => {
+  // 检查用户是否登录
+  if (!userStore.getUserInfo.id || userStore.getUserInfo.id === 0) {
+    unReadCount.value = 0
+    return
+  }
 
+  try {
+    const res = await messageApi.getUnReadMessageNum()
+    if (res.code === 0) {
+      // 确保数据是数字类型，并且不为负数
+      unReadCount.value = Math.max(0, Number(res.data) || 0)
+      console.log("获取到了未读消息数量:", unReadCount.value)
+    } else {
+      console.warn("获取未读消息数量失败:", res.message)
+      unReadCount.value = 0
+    }
+  } catch (error) {
+    console.error("获取未读消息数量异常:", error)
+    unReadCount.value = 0
+  }
+}
 
 const handleChange = (index) => {
   uni.vibrateShort()
@@ -153,7 +175,14 @@ onShareTimeline(() => {
     imageUrl: 'https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png'
   }
 })
+onMounted(() => {
+  getUnReadCount()
+})
 
+// 页面显示时也更新未读消息数量
+onShow(() => {
+  getUnReadCount()
+})
 </script>
 
 <style>
