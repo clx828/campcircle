@@ -6,15 +6,46 @@
                 <view class="nickname">{{ cardInfo.user.userName }}</view>
                 <view class="time">{{ formatTime(cardInfo.createTime) }}</view>
             </view>
-            <view class="follow">
-                <button v-if="!cardInfo.hasFollow && cardInfo.user.id !== userStore.getUserInfo?.id" class="follow-btn"
+            <!-- 关注按钮区域 -->
+            <view v-if="cardInfo.user.id !== userStore.getUserInfo.id" class="follow">
+                <button v-if="!cardInfo.hasFollow" class="follow-btn"
                     hover-class="follow-btn-hover" @click="handleFollow">关注</button>
-                <button v-if="cardInfo.hasFollow && cardInfo.user.id !== userStore.getUserInfo?.id" class="followed-btn"
+                <button v-if="cardInfo.hasFollow" class="followed-btn"
                     hover-class="followed-btn-hover" @click="handleFollow">已关注</button>
             </view>
-          <view class="edit">
-                <button v-if="cardInfo.user.id === userStore.getUserInfo?.id" class="follow-btn"
-                    hover-class="follow-btn-hover" @click="handleFollow">···</button>
+
+            <!-- 编辑菜单区域 -->
+            <view v-if="cardInfo.user.id === userStore.getUserInfo.id" class="edit-menu">
+                <view class="edit-btn" hover-class="edit-btn-hover" @click="toggleEditMenu">
+                    <text class="edit-dots">···</text>
+                </view>
+
+                <!-- 下拉菜单 -->
+                <view v-if="showEditMenu" class="edit-dropdown" @click.stop>
+                    <view class="dropdown-item" @click="handleEdit">
+                        <image class="dropdown-icon" src="/static/button/postedit/edit.png"></image>
+                        <text class="dropdown-text">编辑</text>
+                    </view>
+                    <view class="dropdown-item" @click="handleVisibilityChange">
+                      <image class="dropdown-icon" src="/static/button/postedit/open.png"></image>
+                        <text class="dropdown-text">设为公开</text>
+                    </view>
+                  <view class="dropdown-item" @click="handleVisibilityChange">
+                        <image class="dropdown-icon" src="/static/button/postedit/lock.png"></image>
+                        <text class="dropdown-text">设为私密</text>
+                    </view>
+                  <view class="dropdown-item" @click="handleVisibilityChange">
+                    <image class="dropdown-icon" src="/static/button/postedit/top.png"></image>
+                    <text class="dropdown-text">设为置顶</text>
+                  </view>
+                    <view class="dropdown-item delete-item" @click="handleDelete">
+                      <image class="dropdown-icon" src="/static/button/postedit/delete.png"></image>
+                        <text class="dropdown-text">删除</text>
+                    </view>
+                </view>
+
+                <!-- 遮罩层 -->
+                <view v-if="showEditMenu" class="edit-mask" @click="closeEditMenu"></view>
             </view>
         </view>
         <view class="content-text" @tap="handleContentClick">{{ cardInfo.content }}</view>
@@ -64,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { postApi } from '@/api/post'
 import { useUserStore } from '@/stores/userStore'
 import { followApi } from '@/api/follow'
@@ -101,7 +132,10 @@ const props = defineProps<{
     hideActions?: boolean
 }>()
 const userStore = useUserStore()
-const emit = defineEmits(['share', 'like', 'comment', 'collect', 'follow'])
+const emit = defineEmits(['share', 'like', 'comment', 'collect', 'follow', 'edit', 'delete', 'visibilityChange'])
+
+// 编辑菜单状态
+const showEditMenu = ref(false)
 
 // 根据图片数量计算图片容器的样式类
 const imageClass = computed(() => {
@@ -251,6 +285,50 @@ const handleFollow= async()=> {
             icon: 'error'
         })
     }
+}
+
+// 编辑菜单相关函数
+// 切换编辑菜单显示状态
+const toggleEditMenu = () => {
+    uni.vibrateShort()
+    showEditMenu.value = !showEditMenu.value
+}
+
+// 关闭编辑菜单
+const closeEditMenu = () => {
+    showEditMenu.value = false
+}
+
+// 处理编辑操作
+const handleEdit = () => {
+    uni.vibrateShort()
+    closeEditMenu()
+    emit('edit', props.cardInfo.id)
+}
+
+// 处理删除操作
+const handleDelete = () => {
+    uni.vibrateShort()
+    closeEditMenu()
+
+    uni.showModal({
+        title: '确认删除',
+        content: '删除后无法恢复，确定要删除这条帖子吗？',
+        confirmText: '删除',
+        confirmColor: '#ff4757',
+        success: (res) => {
+            if (res.confirm) {
+                emit('delete', props.cardInfo.id)
+            }
+        }
+    })
+}
+
+// 处理修改可见范围操作
+const handleVisibilityChange = () => {
+    uni.vibrateShort()
+    closeEditMenu()
+    emit('visibilityChange', props.cardInfo.id)
 }
 </script>
 
@@ -519,5 +597,110 @@ const handleFollow= async()=> {
     .actions {
         display: none;
     }
+}
+
+// 编辑菜单样式
+.edit-menu {
+    position: relative;
+    margin-left: auto;
+}
+
+.edit-btn {
+    width: 64rpx;
+    height: 64rpx;
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+
+    .edit-dots {
+        font-size: 32rpx;
+        font-weight: bold;
+        color: #666;
+        line-height: 1;
+        letter-spacing: 2rpx;
+    }
+}
+
+.edit-btn-hover {
+    background: none;
+    transform: scale(0.95);
+}
+
+.edit-dropdown {
+    position: absolute;
+    top: 72rpx;
+    right: 0;
+    background: #fff;
+    border-radius: 16rpx;
+    box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.15);
+    border: 1rpx solid #f0f0f0;
+    z-index: 1000;
+    min-width: 250rpx;
+    overflow: hidden;
+    animation: dropdownSlideIn 0.2s ease;
+}
+
+@keyframes dropdownSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10rpx) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    padding: 24rpx 32rpx;
+    transition: background-color 0.2s ease;
+
+    &:not(:last-child) {
+        border-bottom: 1rpx solid #f5f5f5;
+    }
+
+    &:active {
+        background: #f8f9fa;
+    }
+
+    &.delete-item {
+        .dropdown-text {
+            color: #ff4757;
+        }
+
+        &:active {
+            background: rgba(255, 71, 87, 0.05);
+        }
+    }
+}
+
+.dropdown-icon {
+    width: 32rpx;
+    height: 32rpx;
+    margin-right: 20rpx;
+    opacity: 0.8;
+    display: block;
+}
+
+.dropdown-text {
+    font-size: 28rpx;
+    color: #333;
+    font-weight: 500;
+}
+
+.edit-mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 999;
+    background: transparent;
 }
 </style>
