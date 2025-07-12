@@ -55,8 +55,12 @@ create table if not exists post
     isDelete   tinyint  default 0                 not null comment '是否删除',
     index idx_userId (userId)
 ) comment '帖子' collate = utf8mb4_unicode_ci;
-ALTER TABLE post ADD COLUMN pictureList VARCHAR(255)  COMMENT '图片ID列表';
+ALTER TABLE post ADD COLUMN  pictureList VARCHAR(255)  COMMENT '图片ID列表';
 ALTER TABLE post DROP COLUMN title;
+
+-- 在 post 表中添加置顶相关字段
+ALTER TABLE post ADD COLUMN isTop TINYINT DEFAULT 0 NOT NULL COMMENT '是否置顶：0-否，1-是';
+ALTER TABLE post ADD COLUMN topExpireTime DATETIME NULL COMMENT '置顶过期时间';
 
 -- 帖子点赞表（硬删除）
 create table if not exists post_thumb
@@ -203,3 +207,10 @@ ALTER TABLE private_message ADD INDEX idx_from_to (fromUserId, toUserId);
 
 -- 添加接收者到发送者的联合索引
 ALTER TABLE private_message ADD INDEX idx_to_from (toUserId, fromUserId);
+
+-- 添加热度分数字段
+ALTER TABLE post ADD COLUMN hotScore DECIMAL(10,4) DEFAULT 0.0000 NOT NULL COMMENT '热度分数';
+ALTER TABLE post ADD COLUMN lastHotUpdateTime DATETIME NULL COMMENT '最后热度更新时间';
+
+-- 为热度分数添加索引，用于热门排序
+ALTER TABLE post ADD INDEX idx_hot_score (hotScore DESC, createTime DESC);

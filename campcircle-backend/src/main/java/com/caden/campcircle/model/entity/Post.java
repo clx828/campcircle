@@ -78,6 +78,26 @@ public class Post implements Serializable {
     @TableLogic
     private Integer isDelete;
 
+    /**
+     * 是否置顶
+     */
+    private Integer isTop;
+
+    /**
+     * 置顶过期时间
+     */
+    private Date topExpireTime;
+
+    /**
+     * 热度分数
+     */
+    private Double hotScore;
+
+    /**
+     * 最后热度更新时间
+     */
+    private Date lastHotUpdateTime;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

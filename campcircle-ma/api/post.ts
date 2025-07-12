@@ -22,6 +22,7 @@ export interface ListPostVOByPageParams {
     userId?: number;
 }
 
+
 // 获取我的帖子列表参数
 export interface ListMyPostVOByPageParams {
     current?: number;
@@ -117,6 +118,9 @@ export const postApi = {
 
     editPost(editPostParams:EditPostParams) {
     return request.post(`/api/post/edit`, editPostParams);
-    }
+    },
+	getHotPostList(limit:number) {
+	  return request.get(`/post/get/hot/post/list?limit=${limit}`);
+	}
 
 }

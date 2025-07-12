@@ -5,9 +5,12 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.caden.campcircle.model.dto.post.PostQueryRequest;
 import com.caden.campcircle.model.entity.Post;
+import com.caden.campcircle.model.vo.HotPostVO;
 import com.caden.campcircle.model.vo.MyPostNumVO;
 import com.caden.campcircle.model.vo.PostVO;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Date;
+import java.util.List;
 
 /**
  * 帖子服务
@@ -59,4 +62,15 @@ public interface PostService extends IService<Post> {
     Page<PostVO> getPostVOPage(Page<Post> postPage, HttpServletRequest request);
 
     MyPostNumVO getMyPostNum(Long id);
+
+    /**
+     * 置顶帖子
+     *
+     * @param postId
+     * @param topExpireTime
+     * @return
+     */
+    boolean topPost(long postId, Date topExpireTime);
+
+    List<HotPostVO> getHotPostList(Integer limit);
 }

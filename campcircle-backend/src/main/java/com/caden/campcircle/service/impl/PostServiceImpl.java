@@ -16,6 +16,7 @@ import com.caden.campcircle.mapper.PostThumbMapper;
 import com.caden.campcircle.model.dto.post.PostEsDTO;
 import com.caden.campcircle.model.dto.post.PostQueryRequest;
 import com.caden.campcircle.model.entity.*;
+import com.caden.campcircle.model.vo.HotPostVO;
 import com.caden.campcircle.model.vo.MyPostNumVO;
 import com.caden.campcircle.model.vo.PostVO;
 import com.caden.campcircle.model.vo.UserVO;
@@ -39,6 +40,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.springframework.data.elasticsearch.core.SearchHit;
@@ -128,10 +130,18 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         queryWrapper.ne(ObjectUtils.isNotEmpty(notId), "id", notId);
         queryWrapper.eq(ObjectUtils.isNotEmpty(id), "id", id);
         queryWrapper.eq(ObjectUtils.isNotEmpty(userId), "userId", userId);
-        queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
-                sortField);
-        //按时间升序
-        queryWrapper.orderByDesc("createTime");
+        
+        // 先按置顶状态降序排序，再按其他条件排序
+        queryWrapper.orderByDesc("isTop");
+
+        // 再按用户指定的排序条件排序
+        if (SqlUtils.validSortField(sortField)) {
+            queryWrapper.orderBy(true, sortOrder.equals(CommonConstant.SORT_ORDER_ASC), sortField);
+        } else {
+            // 默认按创建时间降序
+            queryWrapper.orderByDesc("createTime");
+        }
+        
         return queryWrapper;
     }
 
@@ -411,6 +421,54 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         int expireSeconds = 480 + new Random().nextInt(121); // 480~600 秒
         redisTemplate.opsForValue().set(redisKey, String.valueOf(count), expireSeconds, TimeUnit.SECONDS);
         return count;
+    }
+
+    @Override
+    public boolean topPost(long postId, Date topExpireTime) {
+        Post post = this.getById(postId);
+        if (post == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+        
+        // 如果过期时间为空，则取消置顶
+        if (topExpireTime == null) {
+            post.setIsTop(0);
+            post.setTopExpireTime(null);
+        } else {
+            // 设置置顶
+            post.setIsTop(1);
+            post.setTopExpireTime(topExpireTime);
+        }
+        
+        return this.updateById(post);
+    }
+
+    @Override
+    public List<HotPostVO> getHotPostList(Integer limit) {
+        // 限制查询数量
+        if (limit == null || limit <= 0) {
+            limit = 10; // 默认查询10条
+        }
+        //不能大于30
+        if (limit > 30) {
+            limit = 30;
+        }
+        // 只查询需要的字段，提高查询效率
+        QueryWrapper<Post> queryWrapper = new QueryWrapper<>();
+        queryWrapper.select("id", "content", "hotScore")
+                    .eq("isDelete", 0)
+                    .orderByDesc("hotScore")
+                    .last("limit " + limit);
+        
+        // 查询热门帖子
+        List<Post> postList = this.list(queryWrapper);
+        // 转换为VO对象
+        List<HotPostVO> hotPostVOList = postList.stream().map(post -> {
+            HotPostVO hotPostVO = new HotPostVO();
+            BeanUtils.copyProperties(post, hotPostVO);
+            return hotPostVO;
+        }).collect(Collectors.toList());
+        return hotPostVOList;
     }
 
 }

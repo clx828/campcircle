@@ -97,6 +97,21 @@ public class PostVO implements Serializable {
     private Boolean isAnonymous;
 
     /**
+     * 是否置顶
+     */
+    private Integer isTop;
+
+    /**
+     * 置顶过期时间
+     */
+    private Date topExpireTime;
+
+    /**
+     * 热度分数
+     */
+    private Double hotScore;
+
+    /**
      * 包装类转对象
      *
      * @param postVO

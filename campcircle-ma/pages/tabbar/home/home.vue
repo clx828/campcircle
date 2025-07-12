@@ -21,6 +21,9 @@
         <wd-swiper :list="swiperList" autoplay v-model:current="current" :indicator="{ type: 'dots-bar' }"
                    @click="handleClick"></wd-swiper>
       </view>
+
+      <!-- 热度排行榜 -->
+      <HotPostRanking :limit="9" :pageSize="3" />
       <view class="post-list">
         <SocialCard v-for="post in postList" :key="post.id" :cardInfo="post" @like="handleLike" @collect="handleCollect"
                     @comment="handleComment(post.id,post.commentNum)" @share="handleShare(post)" @follow="handleFollow" />
@@ -51,6 +54,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import SocialCard from '@/components/SocialCard.vue'
+import HotPostRanking from '@/components/HotPostRanking.vue'
 import { postApi } from '@/api/post'
 import type { ListPostVOByPageParams } from '@/api/post'
 import CommentPopup from '@/components/CommentPopup.vue'

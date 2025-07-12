@@ -10,12 +10,10 @@ import com.caden.campcircle.common.ResultUtils;
 import com.caden.campcircle.constant.UserConstant;
 import com.caden.campcircle.exception.BusinessException;
 import com.caden.campcircle.exception.ThrowUtils;
-import com.caden.campcircle.model.dto.post.PostAddRequest;
-import com.caden.campcircle.model.dto.post.PostEditRequest;
-import com.caden.campcircle.model.dto.post.PostQueryRequest;
-import com.caden.campcircle.model.dto.post.PostUpdateRequest;
+import com.caden.campcircle.model.dto.post.*;
 import com.caden.campcircle.model.entity.Post;
 import com.caden.campcircle.model.entity.User;
+import com.caden.campcircle.model.vo.HotPostVO;
 import com.caden.campcircle.model.vo.MyPostNumVO;
 import com.caden.campcircle.model.vo.PostVO;
 import com.caden.campcircle.service.PostService;
@@ -23,6 +21,9 @@ import com.caden.campcircle.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -274,5 +275,41 @@ public class PostController {
         return ResultUtils.success(postNum);
     }
 
+    /**
+     * 置顶/取消置顶帖子
+     *
+     * @param postTopRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/top")
+    public BaseResponse<Boolean> topPost(@RequestBody PostTopRequest postTopRequest, HttpServletRequest request) {
+        if (postTopRequest == null || postTopRequest.getPostId() <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User loginUser = userService.getLoginUser(request);
+        if (loginUser == null || loginUser.getId() <= 0){
+            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        }
+        long postId = postTopRequest.getPostId();
+        Integer topTimeHours = postTopRequest.getTopTimeHours();
+        
+        // 计算过期时间
+        Date topExpireTime = null;
+        if (topTimeHours != null && topTimeHours > 0) {
+            // 当前时间加上指定的小时数
+            Calendar calendar = Calendar.getInstance();
+            calendar.add(Calendar.HOUR_OF_DAY, topTimeHours);
+            topExpireTime = calendar.getTime();
+        }
+        
+        boolean result = postService.topPost(postId, topExpireTime);
+        return ResultUtils.success(result);
+    }
+    @GetMapping("/get/hot/post/list")
+    public BaseResponse<List<HotPostVO>> getHotPostList(@RequestParam(defaultValue = "10") Integer limit,
+                                                        HttpServletRequest request) {
+        return ResultUtils.success(postService.getHotPostList(limit));
+    }
 
 }
