@@ -94,6 +94,15 @@
 				"navigationStyle": "custom",
 				"navigationBarTextStyle": "black"
 			}
+		},
+		{
+			"path": "pages/search/search",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTextStyle": "black",
+				"enablePullDownRefresh": false,
+				"backgroundColor": "#fdf4f4"
+			}
 		}
 	],
 

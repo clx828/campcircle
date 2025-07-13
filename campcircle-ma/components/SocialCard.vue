@@ -385,7 +385,7 @@ const handleVisibilityChange = () => {
 .nickname {
     font-weight: 600;
     font-size: 32rpx;
-    color: #1a1a1a;
+    color: #576b95;
     letter-spacing: 0.5rpx;
     margin-bottom: 2rpx;
 }

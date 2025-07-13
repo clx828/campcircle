@@ -6,7 +6,7 @@
         <image
             src="https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png" />
       </view>
-      <view class="search-bar" :style="searchBarStyle">
+      <view class="search-bar" :style="searchBarStyle" @click="goToSearch">
         <image src="/static/button/shousuo.png" mode="aspectFit" class="search-bar-img" />
         <span class="search-bar-span">搜索</span>
       </view>
@@ -112,16 +112,19 @@ const logoStyle = computed(() => {
 
 // 轮播图数据
 const swiperList = ref([
-  'https://registry.npmmirror.com/wot-design-uni-assets/*/files/redpanda.jpg',
-  'https://registry.npmmirror.com/wot-design-uni-assets/*/files/capybara.jpg',
-  'https://registry.npmmirror.com/wot-design-uni-assets/*/files/panda.jpg',
-  'https://registry.npmmirror.com/wot-design-uni-assets/*/files/moon.jpg',
-  'https://registry.npmmirror.com/wot-design-uni-assets/*/files/meng.jpg'
+    '/static/img/homebg.png'
 ])
 
 // 处理轮播图点击事件
 function handleClick(e) {
   console.log('轮播图点击:', e)
+}
+
+// 跳转到搜索页面
+const goToSearch = () => {
+  uni.navigateTo({
+    url: '/pages/search/search'
+  })
 }
 
 // 获取系统信息，用于计算顶部布局

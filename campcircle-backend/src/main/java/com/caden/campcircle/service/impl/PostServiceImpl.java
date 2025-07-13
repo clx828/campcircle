@@ -29,6 +29,8 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import org.springframework.beans.BeanUtils;
+import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -455,7 +457,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }
         // 只查询需要的字段，提高查询效率
         QueryWrapper<Post> queryWrapper = new QueryWrapper<>();
-        queryWrapper.select("id", "content", "hotScore")
+        queryWrapper.select("id", "content", "hotScore", "lastHotUpdateTime")
                     .eq("isDelete", 0)
                     .orderByDesc("hotScore")
                     .last("limit " + limit);
