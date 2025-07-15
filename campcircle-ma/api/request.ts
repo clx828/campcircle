@@ -1,7 +1,8 @@
 import { useUserStore } from '@/stores/userStore'
 
-// API 基础URL
-const BASE_URL = 'http://192.168.1.5:8101/api'  // 这里替换为你的实际API地址
+// // API 基础URL
+// const BASE_URL = 'http://192.168.1.8:8101/api'
+const BASE_URL = 'http://106.55.158.97:8101/api'
 
 // 请求配置接口
 interface RequestConfig extends UniApp.RequestOptions {

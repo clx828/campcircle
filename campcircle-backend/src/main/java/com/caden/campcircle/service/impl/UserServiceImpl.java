@@ -5,8 +5,10 @@ import static com.caden.campcircle.constant.UserConstant.USER_LOGIN_STATE;
 import cn.binarywang.wx.miniapp.bean.WxMaJscode2SessionResult;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caden.campcircle.common.ErrorCode;
+import com.caden.campcircle.common.PageSearchByKeyWord;
 import com.caden.campcircle.constant.CommonConstant;
 import com.caden.campcircle.exception.BusinessException;
 import com.caden.campcircle.mapper.UserMapper;
@@ -237,6 +239,33 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             return new ArrayList<>();
         }
         return userList.stream().map(this::getUserVO).collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<UserVO> listUserVOByPage(PageSearchByKeyWord pageSearchByKeyWord, HttpServletRequest request) {
+        //构建查询条件
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        String keyWord = pageSearchByKeyWord.getKeyWord();
+        if (StringUtils.isNotBlank(keyWord)) {
+            queryWrapper.and(w ->
+                    w.like("userName", keyWord)
+                            .or().like("userProfile", keyWord)
+                            .or().like("id", keyWord)
+            );
+        }
+        // 分页查询
+        Page<User> page = this.page(new Page<>(pageSearchByKeyWord.getCurrent(), pageSearchByKeyWord.getPageSize()), queryWrapper);
+        List<User> userList = page.getRecords();
+        if (CollUtil.isEmpty(userList)){
+            return new Page<>();
+        }
+        // 转换为VO
+        Page<UserVO> userVOPage = new Page<>();
+        userVOPage.setRecords(this.getUserVO(userList));
+        userVOPage.setTotal(page.getTotal());
+        userVOPage.setCurrent(pageSearchByKeyWord.getCurrent());
+        userVOPage.setSize(pageSearchByKeyWord.getPageSize());
+        return userVOPage;
     }
 
     @Override

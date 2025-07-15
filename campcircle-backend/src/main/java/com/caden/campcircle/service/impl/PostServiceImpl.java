@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caden.campcircle.common.ErrorCode;
+import com.caden.campcircle.common.PageSearchByKeyWord;
 import com.caden.campcircle.constant.CommonConstant;
 import com.caden.campcircle.constant.UserConstant;
 import com.caden.campcircle.exception.BusinessException;
@@ -471,6 +472,19 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
             return hotPostVO;
         }).collect(Collectors.toList());
         return hotPostVOList;
+    }
+
+    @Override
+    public Page<PostVO> listPostVOByPage(PageSearchByKeyWord pageSearchByKeyWord, HttpServletRequest request) {
+        String keyWord = pageSearchByKeyWord.getKeyWord();
+        QueryWrapper<Post> queryWrapper = new QueryWrapper<>();
+        queryWrapper.like(StringUtils.isNotBlank(keyWord), "content", keyWord);
+        Page<Post> postPage = this.page(new Page<>(pageSearchByKeyWord.getCurrent(), pageSearchByKeyWord.getPageSize()), queryWrapper);
+        if (postPage.getTotal() == 0){
+            return new Page<>();
+        }
+        Page<PostVO> postVOPage = this.getPostVOPage(postPage, request);
+        return postVOPage;
     }
 
 }

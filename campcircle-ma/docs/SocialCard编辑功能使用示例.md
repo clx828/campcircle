@@ -18,17 +18,14 @@ SocialCard 组件现在支持编辑功能，当帖子是当前用户发布时，
 ```vue
 <template>
   <view class="post-list">
-    <SocialCard 
-      v-for="post in posts" 
+    <SocialCard
+      v-for="post in posts"
       :key="post.id"
       :cardInfo="post"
       @edit="handleEdit"
       @delete="handleDelete"
       @visibilityChange="handleVisibilityChange"
-      @like="handleLike"
-      @comment="handleComment"
       @share="handleShare"
-      @collect="handleCollect"
     />
   </view>
 </template>
@@ -169,10 +166,9 @@ const handleCollect = (data) => {
 // 编辑菜单状态
 const showEditMenu = ref(false)
 
-// 事件定义
+// 事件定义 - 大部分操作已内部化
 const emit = defineEmits([
-  'share', 'like', 'comment', 'collect', 'follow', 
-  'edit', 'delete', 'visibilityChange'
+  'share', 'edit', 'delete', 'visibilityChange'
 ])
 
 // 切换菜单

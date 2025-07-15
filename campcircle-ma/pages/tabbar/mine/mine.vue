@@ -74,7 +74,7 @@
         </wd-tabs>
       </view>
       <view class="tab-content" :class="{ 'tab-content--empty': cardList.length === 0 }">
-        <SocialCard :cardInfo="item" v-for="(item, i) in cardList" :key="i" />
+        <SocialCard :cardInfo="item" v-for="(item, i) in cardList" :key="i" @comment="handleComment" @share="handleShare" />
         <EmptyState text="暂无内容" v-if="cardList.length === 0 && !loading" />
         <view v-if="loading" class="loading-state">
           <wd-loading />
@@ -86,6 +86,15 @@
     </view>
 
   </scroll-view>
+
+  <!-- 全局评论弹窗 -->
+  <CommentPopup
+      v-model:show="showCommentPopup"
+      :comment-num="commentNum"
+      :post-id="currentPostId"
+      @close="handleCommentPopupClose"
+      @comment-success="handleCommentSuccess"
+  />
 
   <!-- 获赞弹窗 -->
   <wd-popup v-model="showThumb" position="center" :close-on-click-modal="false" custom-style="">
@@ -110,6 +119,7 @@ import { IUser } from '@/model/user'
 import AvatarUpload from '@/components/AvatarUpload.vue'
 import SocialCard from '@/components/SocialCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import CommentPopup from '@/components/CommentPopup.vue'
 import { postApi } from '@/api/post'
 import { followApi } from '@/api/follow'
 import { useRouter } from 'vue-router'
@@ -129,6 +139,11 @@ const thumbPostNum = ref(0)
 const followNum = ref(0)
 const fansNum = ref(0)
 const thumbNum2 = ref(0) // 避免与已有 thumbPostNum 冲突
+
+// 评论弹窗相关
+const showCommentPopup = ref(false)
+const currentPostId = ref('')
+const commentNum = ref(0)
 
 // 获取帖子数量
 const fetchPostNums = async () => {
@@ -421,6 +436,46 @@ const showThumbModal = () => {
 const closeThumbModal = () => {
   uni.vibrateShort()
   showThumb.value = false
+}
+
+// 处理评论按钮点击
+function handleComment(postId: string, postCommentNum: number) {
+  currentPostId.value = postId
+  commentNum.value = postCommentNum
+  showCommentPopup.value = true
+}
+
+// 处理评论弹窗关闭
+function handleCommentPopupClose() {
+  showCommentPopup.value = false
+  currentPostId.value = ''
+}
+
+// 处理评论成功
+function handleCommentSuccess() {
+  showCommentPopup.value = false
+  // 刷新当前tab的数据
+  loadData()
+}
+
+// 处理分享
+function handleShare(post: any) {
+  uni.showActionSheet({
+    itemList: ['分享给朋友', '分享到朋友圈'],
+    success: (res) => {
+      if (res.tapIndex === 0) {
+        uni.showToast({
+          title: '请使用右上角分享',
+          icon: 'none'
+        })
+      } else if (res.tapIndex === 1) {
+        uni.showToast({
+          title: '请使用右上角分享到朋友圈',
+          icon: 'none'
+        })
+      }
+    }
+  })
 }
 
 // 配置小程序分享功能

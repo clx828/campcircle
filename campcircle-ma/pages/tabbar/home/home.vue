@@ -25,8 +25,7 @@
       <!-- 热度排行榜 -->
       <HotPostRanking :limit="9" :pageSize="3" />
       <view class="post-list">
-        <SocialCard v-for="post in postList" :key="post.id" :cardInfo="post" @like="handleLike" @collect="handleCollect"
-                    @comment="handleComment(post.id,post.commentNum)" @share="handleShare(post)" @follow="handleFollow" />
+        <SocialCard v-for="post in postList" :key="post.id" :cardInfo="post" @share="handleShare(post)" @comment="handleComment" />
       </view>
       <view v-if="postList.length === 0 && !postLoading" class="empty-tip">
         <text>暂无动态</text>
@@ -44,10 +43,17 @@
       <view class="bottom-space"></view>
     </scroll-view>
 
-    <!-- 评论弹窗 -->
-    <CommentPopup v-model:show="showCommentPopup" :comment-num="commentNum" :post-id="currentPostId" @close="handleCommentPopupClose"
-                  @comment-success="handleCommentSuccess" />
+
     <ShareModal :visible="showShareModal" :shareData="shareData" @close="showShareModal = false" />
+
+    <!-- 全局评论弹窗 -->
+    <CommentPopup
+        v-model:show="showCommentPopup"
+        :comment-num="commentNum"
+        :post-id="currentPostId"
+        @close="handleCommentPopupClose"
+        @comment-success="handleCommentSuccess"
+    />
   </view>
 </template>
 
@@ -57,8 +63,9 @@ import SocialCard from '@/components/SocialCard.vue'
 import HotPostRanking from '@/components/HotPostRanking.vue'
 import { postApi } from '@/api/post'
 import type { ListPostVOByPageParams } from '@/api/post'
-import CommentPopup from '@/components/CommentPopup.vue'
+
 import ShareModal from '@/components/ShareModal.vue'
+import CommentPopup from '@/components/CommentPopup.vue'
 import { onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app'
 
 // 帖子列表数据
@@ -68,6 +75,11 @@ const pageSize = ref(10)
 const refresherTriggered = ref(false)
 const hasMore = ref(true)
 const postLoading = ref(false) // 帖子加载状态
+
+// 评论弹窗相关
+const showCommentPopup = ref(false)
+const currentPostId = ref('')
+const commentNum = ref(0)
 
 // 胶囊按钮和状态栏信息
 const menuButtonHeight = ref(32)
@@ -190,42 +202,6 @@ const onRefresh = async () => {
   refresherTriggered.value = false
 }
 
-// 处理帖子点赞操作
-function handleLike(data: { id: string; hasThumb: boolean; isRollback: boolean }) {
-  // 更新本地数据
-  console.log("点赞了", data)
-  const post = postList.value.find(p => p.id === data.id)
-  if (post) {
-    post.hasThumb = data.hasThumb
-    // 如果是回滚，需要恢复原来的计数
-    if (data.isRollback) {
-      post.thumbNum = data.hasThumb ? post.thumbNum + 1 : post.thumbNum - 1
-    } else {
-      post.thumbNum += data.hasThumb ? 1 : -1
-    }
-  }
-}
-
-// 处理帖子收藏操作
-function handleCollect(data: { id: string; hasFavour: boolean; isRollback: boolean }) {
-  // 更新本地数据
-  const post = postList.value.find(p => p.id === data.id)
-  if (post) {
-    post.hasFavour = data.hasFavour
-    // 如果是回滚，需要恢复原来的计数
-    if (data.isRollback) {
-      post.favourNum = data.hasFavour ? post.favourNum - 1 : post.favourNum + 1
-    } else {
-      post.favourNum += data.hasFavour ? 1 : -1
-    }
-  }
-}
-
-// 评论相关
-const showCommentPopup = ref(false)
-const currentPostId = ref('')
-const commentNum = ref(0)
-
 // 处理评论按钮点击
 function handleComment(postId: string, postCommentNum: number) {
   currentPostId.value = postId
@@ -243,7 +219,10 @@ function handleCommentPopupClose() {
 function handleCommentSuccess() {
   // 刷新帖子列表
   loadPosts()
+  showCommentPopup.value = false
 }
+
+
 
 // 分享相关状态 - 简化版
 const showShareModal = ref(false)
@@ -276,13 +255,7 @@ function handleShare(cardInfo) {
   showShareModal.value = true
 }
 
-// 处理关注
-function handleFollow(data: { id: string; hasFollow: boolean; isRollback: boolean }) {
-  const post = postList.value.find(p => p.user.id === data.id)
-  if (post) {
-    post.hasFollow = data.hasFollow
-  }
-}
+
 
 // 配置分享给朋友 - 简化版
 onShareAppMessage(() => {

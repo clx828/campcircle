@@ -29,8 +29,6 @@
           v-for="post in postList"
           :key="post.id"
           :cardInfo="post"
-          @follow="handleFollow"
-          @like="handleLike"
           @comment="handleComment"
           @share="handleShare"
         />
@@ -62,6 +60,15 @@
       <view class="bottom-space"></view>
     </scroll-view>
 
+    <!-- 全局评论弹窗 -->
+    <CommentPopup
+        v-model:show="showCommentPopup"
+        :comment-num="commentNum"
+        :post-id="currentPostId"
+        @close="handleCommentPopupClose"
+        @comment-success="handleCommentSuccess"
+    />
+
     <!-- 首次加载 -->
     <view v-if="loading && postList.length === 0" class="first-loading">
       <view class="loading-spinner big"></view>
@@ -72,6 +79,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import SocialCard from '@/components/SocialCard.vue'
+import CommentPopup from '@/components/CommentPopup.vue'
 import { followApi, pageRequest } from '@/api/follow'
 import { useUserStore } from '@/stores/userStore'
 
@@ -87,6 +95,11 @@ const postList = ref([])
 const loading = ref(false)
 const hasMore = ref(true)
 const currentPage = ref(1)
+
+// 评论弹窗相关
+const showCommentPopup = ref(false)
+const currentPostId = ref('')
+const commentNum = ref(0)
 const pageSize = 10
 
 // 获取系统信息
@@ -158,39 +171,26 @@ const loadMore = async () => {
   await loadFollowPosts(false)
 }
 
-// 处理关注/取消关注
-const handleFollow = async (data: any) => {
-  try {
-    // 更新本地数据
-    const post = postList.value.find(p => p.user.id === data.userId)
-    if (post) {
-      post.hasFollow = data.hasFollow
-    }
 
-    uni.showToast({
-      title: data.hasFollow ? '关注成功' : '取消关注',
-      icon: 'success'
-    })
-  } catch (error) {
-    console.error('关注操作失败:', error)
-  }
+
+// 处理评论按钮点击
+function handleComment(postId: string, postCommentNum: number) {
+  currentPostId.value = postId
+  commentNum.value = postCommentNum
+  showCommentPopup.value = true
 }
 
-// 处理点赞
-const handleLike = (data: any) => {
-  const post = postList.value.find(p => p.id === data.postId)
-  if (post) {
-    post.hasThumb = data.hasThumb
-    post.thumbNum = data.thumbNum
-  }
+// 处理评论弹窗关闭
+function handleCommentPopupClose() {
+  showCommentPopup.value = false
+  currentPostId.value = ''
 }
 
-// 处理评论
-const handleComment = (data: any) => {
-  // 跳转到帖子详情页
-  uni.navigateTo({
-    url: `/pages/postDetail/postDetail?id=${data.postId}`
-  })
+// 处理评论成功
+function handleCommentSuccess() {
+  // 刷新帖子列表
+  loadFollowPosts(true)
+  showCommentPopup.value = false
 }
 
 // 处理分享

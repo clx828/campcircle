@@ -33,7 +33,6 @@
             v-if="postDetail"
             :cardInfo="postDetail"
             :hideActions="true"
-            @follow="handleFollow"
         />
       </view>
 
@@ -218,12 +217,7 @@ const loadComments = async () => {
 
 
 
-// 处理用户关注状态变化
-const handleFollow = (data: any) => {
-  if (postDetail.value) {
-    postDetail.value.hasFollow = data.hasFollow
-  }
-}
+
 
 // 返回上一页或跳转到首页
 const goBack = () => {

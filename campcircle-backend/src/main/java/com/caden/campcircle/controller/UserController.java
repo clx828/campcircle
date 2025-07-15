@@ -5,10 +5,7 @@ import cn.binarywang.wx.miniapp.bean.WxMaJscode2SessionResult;
 import cn.binarywang.wx.miniapp.config.WxMaConfig;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.caden.campcircle.annotation.AuthCheck;
-import com.caden.campcircle.common.BaseResponse;
-import com. caden.campcircle.common.DeleteRequest;
-import com. caden.campcircle.common.ErrorCode;
-import com. caden.campcircle.common.ResultUtils;
+import com.caden.campcircle.common.*;
 import com.caden.campcircle.config.WxMaConfiguration;
 import com. caden.campcircle.config.WxOpenConfig;
 import com. caden.campcircle.constant.UserConstant;
@@ -366,6 +363,15 @@ public class UserController {
         boolean result = userService.updateById(user);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return ResultUtils.success(true);
+    }
+
+    @GetMapping("/search/by/keyword")
+    @ApiOperation(value = "根据关键词搜索用户", notes = "根据关键词搜索用户")
+    public BaseResponse<Page<UserVO>> searchUserByKeyword(@ApiParam(value = "关键词", required = true)PageSearchByKeyWord pageSearchByKeyWord, HttpServletRequest request) {
+        if (pageSearchByKeyWord == null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
+        }
+        return ResultUtils.success(userService.listUserVOByPage(pageSearchByKeyWord, request));
     }
 
 }

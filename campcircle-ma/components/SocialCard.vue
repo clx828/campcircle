@@ -92,14 +92,17 @@
             </view>
         </view>
     </view>
+
+
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, getCurrentInstance } from 'vue'
 import { postApi } from '@/api/post'
 import { useUserStore } from '@/stores/userStore'
 import { followApi } from '@/api/follow'
 import { formatTime } from '@/utils/format'
+
 
 interface UserInfo {
     id: string
@@ -132,7 +135,7 @@ const props = defineProps<{
     hideActions?: boolean
 }>()
 const userStore = useUserStore()
-const emit = defineEmits(['share', 'like', 'comment', 'collect', 'follow', 'edit', 'delete', 'visibilityChange'])
+const emit = defineEmits(['share', 'comment', 'edit', 'delete', 'visibilityChange'])
 
 // 编辑菜单状态
 const showEditMenu = ref(false)
@@ -171,36 +174,33 @@ function handleContentClick() {
     }
 }
 
-// 处理分享操作
+// 处理分享操作 - 内部化处理
 function handleShare() {
     uni.vibrateShort()
-    emit('share')
+    // 可以在这里添加分享逻辑，暂时保留emit以便后续扩展
+    emit('share', props.cardInfo)
 }
 
 // 处理喜欢
- // 处理点赞操作
-const handleLike=async()=> {
+ // 处理点赞操作 - 完全内部化处理
+const handleLike = async () => {
     uni.vibrateShort()
-    const newHasThumb = !props.cardInfo.hasThumb
-    // 先更新本地状态
-    emit('like', {
-        id: props.cardInfo.id,
-        hasThumb: newHasThumb,
-        isRollback: false
-    })
+    const originalHasThumb = props.cardInfo.hasThumb
+    const originalThumbNum = props.cardInfo.thumbNum
+
+    // 立即更新本地状态以提供即时反馈
+    props.cardInfo.hasThumb = !originalHasThumb
+    props.cardInfo.thumbNum += props.cardInfo.hasThumb ? 1 : -1
 
     // 发送请求
     try {
         await postApi.doThumb({
-            postId: props.cardInfo.id  // 直接使用字符串 ID
+            postId: props.cardInfo.id
         })
     } catch (error) {
         // 请求失败时回滚本地状态
-        emit('like', {
-            id: props.cardInfo.id,
-            hasThumb: !newHasThumb,
-            isRollback: true
-        })
+        props.cardInfo.hasThumb = originalHasThumb
+        props.cardInfo.thumbNum = originalThumbNum
         uni.showToast({
             title: '操作失败',
             icon: 'error'
@@ -208,27 +208,32 @@ const handleLike=async()=> {
     }
 }
 
-// 处理评论操作
+// 处理评论操作 - 触发评论事件
 function handleComment() {
     uni.vibrateShort()
-    emit('comment', props.cardInfo.id)
+    if (props.hideActions) {
+        // 在帖子详情页，不做任何操作（因为已经在详情页了）
+        return
+    } else {
+        // 触发评论事件
+        emit('comment', props.cardInfo.id, props.cardInfo.commentNum)
+    }
 }
 
 // 处理收藏
- // 处理收藏操作
-const handleCollect = async()=> {
+ // 处理收藏操作 - 完全内部化处理
+const handleCollect = async () => {
     uni.vibrateShort()
-    const newHasFavour = !props.cardInfo.hasFavour
-    // 先更新本地状态
-    emit('collect', {
-        id: props.cardInfo.id,
-        hasFavour: newHasFavour,
-        isRollback: false
-    })
+    const originalHasFavour = props.cardInfo.hasFavour
+    const originalFavourNum = props.cardInfo.favourNum
+
+    // 立即更新本地状态以提供即时反馈
+    props.cardInfo.hasFavour = !originalHasFavour
+    props.cardInfo.favourNum += props.cardInfo.hasFavour ? 1 : -1
 
     // 显示收藏/取消收藏提示
     uni.showToast({
-        title: newHasFavour ? '收藏成功' : '已取消收藏',
+        title: props.cardInfo.hasFavour ? '收藏成功' : '已取消收藏',
         icon: 'none',
         duration: 2000
     })
@@ -236,15 +241,12 @@ const handleCollect = async()=> {
     // 发送请求
     try {
         await postApi.doFavour({
-            postId: props.cardInfo.id  // 直接使用字符串 ID
+            postId: props.cardInfo.id
         })
     } catch (error) {
         // 请求失败时回滚本地状态
-        emit('collect', {
-            id: props.cardInfo.id,
-            hasFavour: !newHasFavour,
-            isRollback: true
-        })
+        props.cardInfo.hasFavour = originalHasFavour
+        props.cardInfo.favourNum = originalFavourNum
         uni.showToast({
             title: '操作失败',
             icon: 'error'
@@ -253,33 +255,26 @@ const handleCollect = async()=> {
 }
 
 // 处理关注
- // 处理关注操作
-const handleFollow= async()=> {
+ // 处理关注操作 - 完全内部化处理
+const handleFollow = async () => {
     uni.vibrateShort()
-    const newHasFollow = !props.cardInfo.hasFollow
-    // 先更新本地状态
-    emit('follow', {
-        id: props.cardInfo.user.id,
-        hasFollow: newHasFollow,
-        isRollback: false
-    })
+    const originalHasFollow = props.cardInfo.hasFollow
+
+    // 立即更新本地状态以提供即时反馈
+    props.cardInfo.hasFollow = !originalHasFollow
 
     // 发送请求
     try {
         await followApi.doFollow(props.cardInfo.user.id)
         // 显示关注/取消关注提示
         uni.showToast({
-            title: newHasFollow ? '关注成功' : '已取消关注',
+            title: props.cardInfo.hasFollow ? '关注成功' : '已取消关注',
             icon: 'none',
             duration: 2000
         })
     } catch (error) {
         // 请求失败时回滚本地状态
-        emit('follow', {
-            id: props.cardInfo.user.id,
-            hasFollow: !newHasFollow,
-            isRollback: true
-        })
+        props.cardInfo.hasFollow = originalHasFollow
         uni.showToast({
             title: '操作失败',
             icon: 'error'

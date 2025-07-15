@@ -121,6 +121,8 @@ export const postApi = {
     },
 	getHotPostList(limit:number) {
 	  return request.get(`/post/get/hot/post/list?limit=${limit}`);
-	}
-
+	},
+    searchPostVOByKeyword(current, keyWord, pageSize, sortField, sortOrder) {
+        return request.get(`/post/search/by/keyword?current=${current}&keyWord=${keyWord}&pageSize=${pageSize}&sortField=${sortField}&sortOrder=${sortOrder}`);
+    }
 }

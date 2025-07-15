@@ -3,10 +3,7 @@ package com.caden.campcircle.controller;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.caden.campcircle.annotation.AuthCheck;
-import com.caden.campcircle.common.BaseResponse;
-import com.caden.campcircle.common.DeleteRequest;
-import com.caden.campcircle.common.ErrorCode;
-import com.caden.campcircle.common.ResultUtils;
+import com.caden.campcircle.common.*;
 import com.caden.campcircle.constant.UserConstant;
 import com.caden.campcircle.exception.BusinessException;
 import com.caden.campcircle.exception.ThrowUtils;
@@ -16,6 +13,7 @@ import com.caden.campcircle.model.entity.User;
 import com.caden.campcircle.model.vo.HotPostVO;
 import com.caden.campcircle.model.vo.MyPostNumVO;
 import com.caden.campcircle.model.vo.PostVO;
+import com.caden.campcircle.model.vo.UserVO;
 import com.caden.campcircle.service.PostService;
 import com.caden.campcircle.service.UserService;
 import io.swagger.annotations.Api;
@@ -312,4 +310,12 @@ public class PostController {
         return ResultUtils.success(postService.getHotPostList(limit));
     }
 
+    @GetMapping("/search/by/keyword")
+    @ApiOperation(value = "根据关键词搜索笔记", notes = "根据关键词搜索笔记")
+    public BaseResponse<Page<PostVO>> searchUserByKeyword(@ApiParam(value = "关键词", required = true) PageSearchByKeyWord pageSearchByKeyWord, HttpServletRequest request) {
+        if (pageSearchByKeyWord == null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
+        }
+        return ResultUtils.success(postService.listPostVOByPage(pageSearchByKeyWord, request));
+    }
 }

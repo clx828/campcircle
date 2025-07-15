@@ -83,6 +83,13 @@
     "wot-design-uni": "^1.9.1"
   },
   "devDependencies": {
+    "@dcloudio/vite-plugin-uni": "^3.0.0-alpha-3000020210521001",
     "sass": "^1.89.1"
+  },
+  "scripts": {
+    "dev:mp-weixin": "uni build --platform mp-weixin --mode development --watch",
+    "build:mp-weixin": "uni build --platform mp-weixin --mode production",
+    "dev:h5": "uni serve",
+    "build:h5": "uni build --platform h5 --mode production"
   }
 }

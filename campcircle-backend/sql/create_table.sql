@@ -197,9 +197,9 @@ CREATE TABLE `api_request_log`
     `createTime`     DATETIME     DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
 
     PRIMARY KEY (`id`),
+    INDEX `idx_trace_id` (`traceId`),
     INDEX `idx_uri_time` (`requestUrl`, `createTime`),
     INDEX `idx_user_time` (`userId`, `createTime`)
-
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='接口请求日志表';
 -- 添加发送者到接收者的联合索引

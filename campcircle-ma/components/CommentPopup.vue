@@ -1,23 +1,25 @@
 <template>
-    <view v-if="show" class="custom-popup">
-        <view class="popup-mask" @click="handleClose"></view>
-        <view class="popup-content">
-            <view class="comment-popup">
-                <view class="comment-header">
-                    <text class="title">评论{{props.commentNum }}</text>
-                    <text class="close-btn" @click="handleClose">×</text>
-                </view>
-                <view class="comment-container">
-                    <CommentList :comment-list="commentList" @reply="handleReply" />
-                </view>
-                <view class="comment-input-wrapper">
-                    <CommentInput :placeholder="replyTo ? `回复 ${replyTo.userName}` : '说点什么...'" :replyTo="replyTo"
-                        :show="showCommentInput" @update:show="showCommentInput = $event" @submit="handleSubmit"
-                        @close="handleClose" />
+    <Transition name="popup">
+        <view v-if="show" class="custom-popup">
+            <view class="popup-mask" @click="handleClose"></view>
+            <view class="popup-content">
+                <view class="comment-popup">
+                    <view class="comment-header">
+                        <text class="title">评论{{props.commentNum }}</text>
+                        <text class="close-btn" @click="handleClose">×</text>
+                    </view>
+                    <view class="comment-container">
+                        <CommentList :comment-list="commentList" @reply="handleReply" />
+                    </view>
+                    <view class="comment-input-wrapper">
+                        <CommentInput :placeholder="replyTo ? `回复 ${replyTo.userName}` : '说点什么...'" :replyTo="replyTo"
+                            :show="showCommentInput" @update:show="showCommentInput = $event" @submit="handleSubmit"
+                            @close="handleClose" />
+                    </view>
                 </view>
             </view>
         </view>
-    </view>
+    </Transition>
 </template>
 
 <script setup lang="ts">
@@ -147,33 +149,72 @@ function handleClose() {
 
 <style lang="scss" scoped>
 .custom-popup {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 9999;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 99999 !important;
+    width: 100vw !important;
+    height: 100vh !important;
 }
 
 .popup-mask {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
     background-color: rgba(0, 0, 0, 0.5);
 }
 
 .popup-content {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    transform: translateY(0);
-    transition: transform 0.3s ease-out;
+    position: absolute !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
     border-top-left-radius: 20rpx;
     border-top-right-radius: 20rpx;
     overflow: hidden;
+}
+
+/* 弹窗进入/离开动画 */
+.popup-enter-active,
+.popup-leave-active {
+    transition: all 0.3s ease-out;
+}
+
+.popup-enter-active .popup-mask,
+.popup-leave-active .popup-mask {
+    transition: opacity 0.3s ease-out;
+}
+
+.popup-enter-active .popup-content,
+.popup-leave-active .popup-content {
+    transition: transform 0.3s ease-out;
+}
+
+.popup-enter-from .popup-mask,
+.popup-leave-to .popup-mask {
+    opacity: 0;
+}
+
+.popup-enter-from .popup-content,
+.popup-leave-to .popup-content {
+    transform: translateY(100%);
+}
+
+.popup-enter-to .popup-mask,
+.popup-leave-from .popup-mask {
+    opacity: 1;
+}
+
+.popup-enter-to .popup-content,
+.popup-leave-from .popup-content {
+    transform: translateY(0);
 }
 
 .comment-popup {

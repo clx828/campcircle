@@ -401,14 +401,11 @@ onUnmounted(() => {
     font-size: 32rpx;
     font-weight: 800;
     font-family: 'Arial Black', 'PingFang SC', sans-serif;
-    color: #666666;
-    background: linear-gradient(135deg, #666666 0%, #888888 50%, #666666 100%);
+    color: #d1d1d1;
+    background: linear-gradient(135deg, #d1d1d1 0%, #d1d0d0 50%, #d1d1d1 100%);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    text-shadow:
-        2rpx 2rpx 4rpx rgba(102, 102, 102, 0.4),
-        0 0 8rpx rgba(102, 102, 102, 0.3);
     filter: drop-shadow(0 2rpx 4rpx rgba(102, 102, 102, 0.3));
     transform: perspective(100rpx) rotateX(15deg);
     transition: all 0.3s ease;

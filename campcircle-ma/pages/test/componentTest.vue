@@ -24,10 +24,11 @@
         
         <!-- CommentPopup 组件 -->
         <CommentPopup
-            :show="popupShow"
-            :postId="'test-post-id'"
-            :commentNum="5"
+            v-model:show="popupShow"
+            :post-id="'test-post-id'"
+            :comment-num="5"
             @close="handlePopupClose"
+            @comment-success="handleCommentSuccess"
         />
     </view>
 </template>
@@ -62,6 +63,14 @@ function showCommentPopup() {
 
 function handlePopupClose() {
     popupShow.value = false
+}
+
+function handleCommentSuccess() {
+    popupShow.value = false
+    uni.showToast({
+        title: '评论成功',
+        icon: 'success'
+    })
 }
 </script>
 

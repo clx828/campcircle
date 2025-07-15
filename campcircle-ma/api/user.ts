@@ -76,5 +76,8 @@ export const userApi = {
 	//更新资料
 	updateMyUser(updateMyUserParams :UpdateMyUserParams){
 		return request.post('/user/update/my',updateMyUserParams)
-	}
+	},
+    searchUserVOByKeyword(current, keyWord, pageSize, sortField, sortOrder) {
+        return request.get(`/user/search/by/keyword?current=${current}&keyWord=${keyWord}&pageSize=${pageSize}&sortField=${sortField}&sortOrder=${sortOrder}`);
+    }
 } 

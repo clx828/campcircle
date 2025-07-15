@@ -3,11 +3,14 @@ package com.caden.campcircle.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.caden.campcircle.common.PageSearchByKeyWord;
 import com.caden.campcircle.model.dto.post.PostQueryRequest;
 import com.caden.campcircle.model.entity.Post;
 import com.caden.campcircle.model.vo.HotPostVO;
 import com.caden.campcircle.model.vo.MyPostNumVO;
 import com.caden.campcircle.model.vo.PostVO;
+import com.caden.campcircle.model.vo.UserVO;
+
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 import java.util.List;
@@ -73,4 +76,6 @@ public interface PostService extends IService<Post> {
     boolean topPost(long postId, Date topExpireTime);
 
     List<HotPostVO> getHotPostList(Integer limit);
+
+    Page<PostVO> listPostVOByPage(PageSearchByKeyWord pageSearchByKeyWord, HttpServletRequest request);
 }

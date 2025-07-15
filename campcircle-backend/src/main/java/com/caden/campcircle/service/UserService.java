@@ -2,7 +2,9 @@ package com.caden.campcircle.service;
 
 import cn.binarywang.wx.miniapp.bean.WxMaJscode2SessionResult;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.caden.campcircle.common.PageSearchByKeyWord;
 import com.caden.campcircle.model.dto.user.UserQueryRequest;
 import com.caden.campcircle.model.entity.User;
 import com.caden.campcircle.model.vo.LoginUserVO;
@@ -110,6 +112,10 @@ public interface UserService extends IService<User> {
      */
     List<UserVO> getUserVO(List<User> userList);
 
+    /**
+     * 通过关键字分页搜索用户
+     */
+    Page<UserVO> listUserVOByPage(PageSearchByKeyWord pageSearchByKeyWord,HttpServletRequest request);
     /**
      * 获取查询条件
      *
