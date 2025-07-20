@@ -129,8 +129,13 @@
               v-for="post in searchResults.posts"
               :key="post.id"
               :cardInfo="post"
+              :ref="(el) => setSocialCardRef(el, post.id)"
               @comment="handleComment"
               @share="handleShare"
+              @edit="handleEdit"
+              @delete="handleDelete"
+              @menuToggle="handleMenuToggle"
+              @visibilityChange="handleVisibilityChange"
             />
 
             <!-- 加载更多 -->
@@ -577,9 +582,134 @@ function handleCommentSuccess() {
   // 可以在这里刷新搜索结果
 }
 
+// SocialCard 组件引用管理
+const socialCardRefs = ref(new Map())
+
+// 设置 SocialCard 组件引用
+function setSocialCardRef(el, postId) {
+  if (el) {
+    socialCardRefs.value.set(postId, el)
+  } else {
+    socialCardRefs.value.delete(postId)
+  }
+}
+
+// 处理菜单切换 - 确保一次只能打开一个菜单
+function handleMenuToggle(currentPostId) {
+  // 关闭所有其他菜单
+  socialCardRefs.value.forEach((cardRef, postId) => {
+    if (postId !== currentPostId && cardRef && cardRef.closeEditMenu) {
+      cardRef.closeEditMenu()
+    }
+  })
+}
+
+// 处理可见性变更
+async function handleVisibilityChange(postId, action) {
+  console.log(`帖子 ${postId} 执行操作: ${action}`)
+
+  try {
+    if (action === 'public' || action === 'private') {
+      // 调用后端API更新帖子的可见性
+      const updateParams = {
+        id: postId,
+        isPublic: action === 'public' ? 1 : 0
+      }
+
+      const response = await postApi.updatePost(updateParams)
+
+      if (response.code === 0) {
+        uni.showToast({
+          title: action === 'public' ? '已设为公开' : '已设为私密',
+          icon: 'success'
+        })
+      } else {
+        // API调用成功但业务失败，回滚本地状态
+        const targetPost = searchResults.value.posts.find(post => post.id === postId)
+        if (targetPost) {
+          targetPost.isPublic = action === 'public' ? 0 : 1
+        }
+        uni.showToast({
+          title: response.message || '操作失败',
+          icon: 'error'
+        })
+      }
+    } else if (action === 'top') {
+      // 置顶功能暂时显示提示
+      uni.showToast({
+        title: '置顶功能开发中',
+        icon: 'none'
+      })
+    }
+  } catch (error) {
+    console.error('更新帖子状态失败:', error)
+
+    // API调用失败，回滚本地状态
+    const targetPost = searchResults.value.posts.find(post => post.id === postId)
+    if (targetPost && (action === 'public' || action === 'private')) {
+      targetPost.isPublic = action === 'public' ? 0 : 1
+    }
+
+    uni.showToast({
+      title: '网络错误，请重试',
+      icon: 'error'
+    })
+  }
+}
+
+// 处理编辑事件
+function handleEdit(postId) {
+  console.log('编辑帖子:', postId)
+  // 跳转到编辑页面
+  uni.navigateTo({
+    url: `/pages/editPost/editPost?id=${postId}`
+  })
+}
+
+// 处理删除事件
+function handleDelete(postId) {
+  console.log('删除帖子:', postId)
+  // 从搜索结果中移除已删除的帖子
+  const index = searchResults.value.posts.findIndex(post => post.id === postId)
+  if (index !== -1) {
+    searchResults.value.posts.splice(index, 1)
+  }
+}
+
 // 处理分享操作
 const handleShare = (post: any) => {
   console.log('分享操作:', post)
+  uni.vibrateShort()
+
+  // 显示分享选项
+  uni.showActionSheet({
+    itemList: ['分享给朋友', '分享到朋友圈', '复制链接'],
+    success: (res) => {
+      if (res.tapIndex === 0) {
+        uni.showToast({
+          title: '请使用右上角分享给朋友',
+          icon: 'none'
+        })
+      } else if (res.tapIndex === 1) {
+        uni.showToast({
+          title: '请使用右上角分享到朋友圈',
+          icon: 'none'
+        })
+      } else if (res.tapIndex === 2) {
+        // 复制链接
+        const shareUrl = `pages/postDetail/postDetail?id=${post.id}`
+        uni.setClipboardData({
+          data: shareUrl,
+          success: () => {
+            uni.showToast({
+              title: '链接已复制',
+              icon: 'success'
+            })
+          }
+        })
+      }
+    }
+  })
 }
 
 // 处理用户相关操作
@@ -612,7 +742,7 @@ const handleUserFollow = async (user: any) => {
 
 const goToUserProfile = (user: any) => {
   uni.navigateTo({
-    url: `/pages/info/info?userId=${user.id}`
+    url: `/pages/userProfile/userProfile?id=${user.id}`
   })
 }
 </script>

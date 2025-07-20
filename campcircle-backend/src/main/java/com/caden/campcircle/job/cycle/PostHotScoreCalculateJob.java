@@ -75,7 +75,7 @@ public class PostHotScoreCalculateJob {
 
                 // 批量计算并更新热度分数
                 for (Post post : postList) {
-                    double hotScore = calculatePostHotScore(post);
+                    int hotScore = calculatePostHotScore(post);
                     updatePostHotScore(post.getId(), hotScore);
                 }
 
@@ -104,7 +104,7 @@ public class PostHotScoreCalculateJob {
      * @param post 帖子对象
      * @return 热度分数
      */
-    private double calculatePostHotScore(Post post) {
+    private int calculatePostHotScore(Post post) {
         // 获取帖子的各项数据
         int thumbNum = post.getThumbNum() != null ? post.getThumbNum() : 0;
         int favourNum = post.getFavourNum() != null ? post.getFavourNum() : 0;
@@ -128,7 +128,7 @@ public class PostHotScoreCalculateJob {
         double hotScore = numerator / denominator;
 
         // 保留4位小数
-        return Math.round(hotScore * 1000.0) / 10.0;
+        return (int) (Math.round(hotScore * 100));
     }
 
     /**

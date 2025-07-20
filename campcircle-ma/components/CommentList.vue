@@ -7,8 +7,8 @@
         <view v-else class="comment-list">
             <view v-for="comment in commentList" :key="comment.id" class="comment-item">
                 <view class="comment-user">
-                    <image :src="comment.user.userAvatar" class="avatar" />
-                    <view class="user-info">
+                    <image :src="comment.user.userAvatar" class="avatar" @click="goToUserProfile(comment.user.id)" />
+                    <view class="user-info" @click="goToUserProfile(comment.user.id)">
                         <text class="username">{{ comment.user.userName }}</text>
                         <text class="time">{{ formatTime(comment.createTime) }}</text>
                     </view>
@@ -17,11 +17,11 @@
                 <view v-if="comment.children && comment.children.length > 0" class="reply-list">
                     <view v-for="reply in comment.children" :key="reply.id" class="reply-item">
                         <view class="reply-user">
-                            <image :src="reply.user.userAvatar" class="avatar" />
-                            <view class="user-info">
+                            <image :src="reply.user.userAvatar" class="avatar" @click="goToUserProfile(reply.user.id)" />
+                            <view class="user-info" @click="goToUserProfile(reply.user.id)">
                                 <text class="username">{{ reply.user.userName }}</text>
                                 <text v-if="reply.replyUser" class="reply-to">回复</text>
-                                <text v-if="reply.replyUser" class="username">{{ reply.replyUser.userName }}</text>
+                                <text v-if="reply.replyUser" class="username" @click.stop="goToUserProfile(reply.replyUser.id)">{{ reply.replyUser.userName }}</text>
                                 <text class="time">{{ formatTime(reply.createTime) }}</text>
                             </view>
                         </view>
@@ -77,6 +77,14 @@ function handleReply(comment: Comment, replyTo?: Comment) {
     // 如果replyTo存在，说明是回复二级评论，此时comment是一级评论
     // 如果replyTo不存在，说明是回复一级评论，此时comment就是一级评论
     emit('reply', comment, replyTo)
+}
+
+// 跳转到用户主页
+function goToUserProfile(userId: string) {
+    uni.vibrateShort()
+    uni.navigateTo({
+        url: `/pages/userProfile/userProfile?id=${userId}`
+    })
 }
 </script>
 

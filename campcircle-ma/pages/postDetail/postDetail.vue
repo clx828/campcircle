@@ -33,6 +33,12 @@
             v-if="postDetail"
             :cardInfo="postDetail"
             :hideActions="true"
+            @share="handleShare"
+            @comment="handleComment"
+            @edit="handleEdit"
+            @delete="handleDelete"
+            @menuToggle="handleMenuToggle"
+            @visibilityChange="handleVisibilityChange"
         />
       </view>
 
@@ -239,15 +245,21 @@ const onRefresh = async () => {
   refresherTriggered.value = false
 }
 
-// 处理分享
-const handleShare = () => {
+// 处理分享 - 支持导航栏分享和SocialCard分享
+const handleShare = (post?: any) => {
+  console.log('详情页分享:', post || '导航栏分享')
+
+  const itemList = post ?
+    ['分享给朋友', '分享到朋友圈', '复制链接'] :
+    ['分享给朋友', '分享到朋友圈']
+
   uni.showActionSheet({
-    itemList: ['分享给朋友', '分享到朋友圈'],
+    itemList,
     success: (res) => {
       if (res.tapIndex === 0) {
         // 分享给朋友
         uni.showToast({
-          title: '请使用右上角分享',
+          title: '请使用右上角分享给朋友',
           icon: 'none'
         })
       } else if (res.tapIndex === 1) {
@@ -256,7 +268,105 @@ const handleShare = () => {
           title: '请使用右上角分享到朋友圈',
           icon: 'none'
         })
+      } else if (res.tapIndex === 2 && post) {
+        // 复制链接（仅在有post参数时显示）
+        const shareUrl = `pages/postDetail/postDetail?id=${post.id}`
+        uni.setClipboardData({
+          data: shareUrl,
+          success: () => uni.showToast({ title: '链接已复制', icon: 'success' })
+        })
       }
+    }
+  })
+}
+
+// 处理评论事件 - 在详情页中通常不会触发，但为了保持一致性
+function handleComment(postId, commentNum) {
+  console.log('详情页评论帖子:', postId, commentNum)
+  // 在详情页中，由于hideActions=true，评论按钮不会显示
+  // 但为了保持接口一致性，这里提供实现
+  // 可以滚动到评论区域
+  uni.pageScrollTo({
+    selector: '.comment-section',
+    duration: 300
+  })
+}
+
+// 处理菜单切换 - 在详情页中通常不需要，但为了保持一致性
+function handleMenuToggle(currentPostId) {
+  // 在详情页中，由于hideActions=true，编辑菜单不会显示
+  // 这个函数主要是为了保持接口一致性
+  console.log('详情页菜单切换:', currentPostId)
+}
+
+// 处理可见性变更 - 在详情页中通常不需要，但为了保持一致性
+async function handleVisibilityChange(postId, action) {
+  console.log(`详情页帖子 ${postId} 执行操作: ${action}`)
+
+  // 在详情页中，由于hideActions=true，编辑菜单不会显示
+  // 但如果将来需要支持，这里提供完整的实现
+  try {
+    if (action === 'public' || action === 'private') {
+      // 调用后端API更新帖子的可见性
+      const updateParams = {
+        id: postId,
+        isPublic: action === 'public' ? 1 : 0
+      }
+
+      const response = await postApi.updatePost(updateParams)
+
+      if (response.code === 0) {
+        // 更新本地帖子详情数据
+        if (postDetail.value && postDetail.value.id === postId) {
+          postDetail.value.isPublic = action === 'public' ? 1 : 0
+        }
+
+        uni.showToast({
+          title: action === 'public' ? '已设为公开' : '已设为私密',
+          icon: 'success'
+        })
+      } else {
+        uni.showToast({
+          title: response.message || '操作失败',
+          icon: 'error'
+        })
+      }
+    } else if (action === 'top') {
+      // 置顶功能暂时显示提示
+      uni.showToast({
+        title: '置顶功能开发中',
+        icon: 'none'
+      })
+    }
+  } catch (error) {
+    console.error('更新帖子状态失败:', error)
+    uni.showToast({
+      title: '网络错误，请重试',
+      icon: 'error'
+    })
+  }
+}
+
+// 处理编辑事件 - 在详情页中通常不会触发，但为了保持一致性
+function handleEdit(postId) {
+  console.log('详情页编辑帖子:', postId)
+  // 跳转到编辑页面
+  uni.navigateTo({
+    url: `/pages/editPost/editPost?id=${postId}`
+  })
+}
+
+// 处理删除事件 - 在详情页中通常不会触发，但为了保持一致性
+function handleDelete(postId) {
+  console.log('详情页删除帖子:', postId)
+  // 删除后返回上一页
+  uni.showToast({
+    title: '帖子已删除',
+    icon: 'success',
+    complete: () => {
+      setTimeout(() => {
+        goBack()
+      }, 1500)
     }
   })
 }

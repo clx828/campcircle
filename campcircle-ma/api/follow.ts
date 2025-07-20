@@ -22,5 +22,15 @@ export const followApi = {
     },
     getFollowPostList(pageRequest: pageRequest) {
         return request.get('/follow/my/follow/post/list', pageRequest)
+    },
+
+    // 获取指定用户的关注/粉丝数量
+    getUserFollowNum(userId: string | number) {
+        return request.get(`/follow/get/user/num?userId=${userId}`)
+    },
+
+    // 检查是否关注了指定用户
+    checkFollowStatus(userId: string | number) {
+        return request.get(`/follow/check/status?userId=${userId}`)
     }
 }

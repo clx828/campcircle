@@ -48,6 +48,15 @@ public class PostCommentServiceImpl extends ServiceImpl<PostCommentMapper, PostC
         if (post == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "帖子不存在");
         }
+
+        // 检查帖子是否公开，如果不公开，只有帖子作者可以评论
+        if (post.getIsPublic() != null && post.getIsPublic() == 0) {
+            // 帖子不公开，只有作者本人可以评论
+            if (!post.getUserId().equals(loginUser.getId())) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "该帖子不公开，无法评论");
+            }
+        }
+
         // 2. 校验用户是否存在
         if (loginUser == null|| loginUser.getId() == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);

@@ -22,6 +22,10 @@
         select p.*
         from post p
                  join (select postId from post_thumb where userId = #{thumbUserId}) pt
-                      on p.id = pt.postId ${ew.customSqlSegment}
+                      on p.id = pt.postId
+        where p.isDelete = 0
+        <if test="ew != null and ew.sqlSegment != null and ew.sqlSegment != ''">
+            AND ${ew.sqlSegment}
+        </if>
     </select>
 </mapper>

@@ -20,9 +20,10 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,title,content,tags,
-        thumbNum,favourNum,userId,
-        createTime,updateTime,isDelete
+        id,content,tags,pictureList,
+        thumbNum,favourNum,commentNum,viewNum,userId,
+        createTime,updateTime,isDelete,isTop,topExpireTime,
+        hotScore,lastHotUpdateTime,isPublic
     </sql>
 
     <select id="listPostWithDelete" resultType="com.caden.campcircle.model.entity.Post">

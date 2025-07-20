@@ -79,6 +79,10 @@ public class PostFavourController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         User loginUser = userService.getLoginUser(request);
+
+        // 只显示公开的收藏帖子
+        postQueryRequest.setIsPublic(1);
+
         long current = postQueryRequest.getCurrent();
         long size = postQueryRequest.getPageSize();
         // 限制爬虫
@@ -105,6 +109,12 @@ public class PostFavourController {
         Long userId = postFavourQueryRequest.getUserId();
         // 限制爬虫
         ThrowUtils.throwIf(size > 20 || userId == null, ErrorCode.PARAMS_ERROR);
+
+        // 只显示公开的收藏帖子
+        if (postFavourQueryRequest.getPostQueryRequest() != null) {
+            postFavourQueryRequest.getPostQueryRequest().setIsPublic(1);
+        }
+
         Page<Post> postPage = postFavourService.listFavourPostByPage(new Page<>(current, size),
                 postService.getQueryWrapper(postFavourQueryRequest.getPostQueryRequest()), userId);
         return ResultUtils.success(postService.getPostVOPage(postPage, request));

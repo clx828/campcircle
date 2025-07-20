@@ -61,6 +61,8 @@ ALTER TABLE post DROP COLUMN title;
 -- 在 post 表中添加置顶相关字段
 ALTER TABLE post ADD COLUMN isTop TINYINT DEFAULT 0 NOT NULL COMMENT '是否置顶：0-否，1-是';
 ALTER TABLE post ADD COLUMN topExpireTime DATETIME NULL COMMENT '置顶过期时间';
+# 是否公开
+ALTER TABLE post ADD COLUMN isPublic TINYINT DEFAULT 1 NOT NULL COMMENT '是否公开：0-否，1-是';
 
 -- 帖子点赞表（硬删除）
 create table if not exists post_thumb

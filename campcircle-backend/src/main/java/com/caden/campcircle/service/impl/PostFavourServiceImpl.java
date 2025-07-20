@@ -44,6 +44,15 @@ public class PostFavourServiceImpl extends ServiceImpl<PostFavourMapper, PostFav
         if (post == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
+
+        // 检查帖子是否公开，如果不公开，只有帖子作者可以收藏
+        if (post.getIsPublic() != null && post.getIsPublic() == 0) {
+            // 帖子不公开，只有作者本人可以收藏（虽然这种情况很少见）
+            if (!post.getUserId().equals(loginUser.getId())) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "该帖子不公开，无法收藏");
+            }
+        }
+
         // 是否已帖子收藏
         long userId = loginUser.getId();
         // 每个用户串行帖子收藏

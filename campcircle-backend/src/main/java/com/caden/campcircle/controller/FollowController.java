@@ -138,6 +138,40 @@ public class FollowController {
     }
 
     /**
+     * 获取指定用户的关注数和粉丝数
+     *
+     * @param userId 用户ID
+     * @return 关注数和粉丝数
+     */
+    @GetMapping("/get/user/num")
+    @ApiOperation(value = "获取指定用户的关注数和粉丝数", notes = "获取指定用户的关注数、粉丝数、获赞数")
+    public BaseResponse<FollowNum> getUserFollowNum(@RequestParam @ApiParam(value = "用户ID", required = true) Long userId) {
+        if (userId <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        FollowNum followNum = followService.getFollowNum(userId);
+        return ResultUtils.success(followNum);
+    }
+
+    /**
+     * 检查是否关注了指定用户
+     *
+     * @param userId 用户ID
+     * @param request HTTP请求
+     * @return 是否关注
+     */
+    @GetMapping("/check/status")
+    @ApiOperation(value = "检查是否关注了指定用户", notes = "检查当前登录用户是否关注了指定用户")
+    public BaseResponse<Boolean> checkFollowStatus(@RequestParam @ApiParam(value = "用户ID", required = true) Long userId, HttpServletRequest request) {
+        if (userId <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User loginUser = userService.getLoginUser(request);
+        boolean result = followService.hasFollow(loginUser.getId(), userId);
+        return ResultUtils.success(result);
+    }
+
+    /**
      * 获取关注用户的帖子列表
      *
      * @param request

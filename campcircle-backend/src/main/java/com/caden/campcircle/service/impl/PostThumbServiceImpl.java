@@ -42,6 +42,15 @@ public class PostThumbServiceImpl extends ServiceImpl<PostThumbMapper, PostThumb
         if (post == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
+
+        // 检查帖子是否公开，如果不公开，只有帖子作者可以点赞
+        if (post.getIsPublic() != null && post.getIsPublic() == 0) {
+            // 帖子不公开，只有作者本人可以点赞（虽然这种情况很少见）
+            if (!post.getUserId().equals(loginUser.getId())) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "该帖子不公开，无法点赞");
+            }
+        }
+
         // 是否已点赞
         long userId = loginUser.getId();
         // 每个用户串行点赞

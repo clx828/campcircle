@@ -74,6 +74,10 @@ public class PostThumbController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         User loginUser = userService.getLoginUser(request);
+
+        // 只显示公开的点赞帖子
+        postQueryRequest.setIsPublic(1);
+
         long current = postQueryRequest.getCurrent();
         long size = postQueryRequest.getPageSize();
         // 限制爬虫

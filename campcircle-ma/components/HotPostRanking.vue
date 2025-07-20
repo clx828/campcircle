@@ -15,7 +15,7 @@
     <!-- 轮播图容器 -->
     <view class="swiper-container">
       <swiper
-          class="ranking-swiper"
+          class="ranking-swip                 er"
           :indicator-dots="true"
           :autoplay="true"
           :interval="4000"
@@ -181,9 +181,9 @@ const getRankImage = (index: number) => {
 // 格式化热度分数
 const formatHotScore = (score: number) => {
   if (score >= 1000) {
-    return (score / 1000).toFixed(1) + 'k'
+    return Math.round(score / 1000) + 'k'
   }
-  return score.toFixed(1)
+  return Math.round(score).toString()
 }
 
 // 计算更新时间（分钟）

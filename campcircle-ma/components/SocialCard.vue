@@ -1,8 +1,8 @@
 <template>
     <view class="social-card" :class="{ 'hide-actions': hideActions }">
         <view class="header">
-            <image class="avatar-img" :src="cardInfo.user.userAvatar" />
-            <view class="user-info">
+            <image class="avatar-img" :src="cardInfo.user.userAvatar" @click="goToUserProfile" />
+            <view class="user-info" @click="goToUserProfile">
                 <view class="nickname">{{ cardInfo.user.userName }}</view>
                 <view class="time">{{ formatTime(cardInfo.createTime) }}</view>
             </view>
@@ -26,20 +26,21 @@
                         <image class="dropdown-icon" src="/static/button/postedit/edit.png"></image>
                         <text class="dropdown-text">编辑</text>
                     </view>
-                    <view class="dropdown-item" @click="handleVisibilityChange">
-                      <image class="dropdown-icon" src="/static/button/postedit/open.png"></image>
+                    <!-- 根据 isPublic 字段显示不同的可见性选项 -->
+                    <view v-if="cardInfo.isPublic === 0" class="dropdown-item" @click="handleVisibilityChange('public')">
+                        <image class="dropdown-icon" src="/static/button/postedit/open.png"></image>
                         <text class="dropdown-text">设为公开</text>
                     </view>
-                  <view class="dropdown-item" @click="handleVisibilityChange">
+                    <view v-if="cardInfo.isPublic === 1" class="dropdown-item" @click="handleVisibilityChange('private')">
                         <image class="dropdown-icon" src="/static/button/postedit/lock.png"></image>
                         <text class="dropdown-text">设为私密</text>
                     </view>
-                  <view class="dropdown-item" @click="handleVisibilityChange">
-                    <image class="dropdown-icon" src="/static/button/postedit/top.png"></image>
-                    <text class="dropdown-text">设为置顶</text>
-                  </view>
+                    <view class="dropdown-item" @click="handleVisibilityChange('top')">
+                        <image class="dropdown-icon" src="/static/button/postedit/top.png"></image>
+                        <text class="dropdown-text">设为置顶</text>
+                    </view>
                     <view class="dropdown-item delete-item" @click="handleDelete">
-                      <image class="dropdown-icon" src="/static/button/postedit/delete.png"></image>
+                        <image class="dropdown-icon" src="/static/button/postedit/delete.png"></image>
                         <text class="dropdown-text">删除</text>
                     </view>
                 </view>
@@ -98,10 +99,10 @@
 
 <script setup lang="ts">
 import { computed, ref, getCurrentInstance } from 'vue'
-import { postApi } from '@/api/post'
 import { useUserStore } from '@/stores/userStore'
 import { followApi } from '@/api/follow'
 import { formatTime } from '@/utils/format'
+import { postApi } from '@/api/post'
 
 
 interface UserInfo {
@@ -128,6 +129,7 @@ interface CardInfo {
     hasThumb: boolean
     hasFavour: boolean
     hasFollow: boolean
+    isPublic: number  // 0: 私密, 1: 公开
 }
 
 const props = defineProps<{
@@ -135,7 +137,7 @@ const props = defineProps<{
     hideActions?: boolean
 }>()
 const userStore = useUserStore()
-const emit = defineEmits(['share', 'comment', 'edit', 'delete', 'visibilityChange'])
+const emit = defineEmits(['share', 'comment', 'edit', 'delete', 'visibilityChange', 'menuToggle'])
 
 // 编辑菜单状态
 const showEditMenu = ref(false)
@@ -282,10 +284,32 @@ const handleFollow = async () => {
     }
 }
 
+// 跳转到用户主页
+const goToUserProfile = () => {
+    uni.vibrateShort()
+    // 如果是自己，跳转到我的页面
+    if (props.cardInfo.user.id === userStore.getUserInfo.id) {
+        uni.switchTab({
+            url: '/pages/tabbar/mine/mine'
+        })
+    } else {
+        // 跳转到他人主页
+        uni.navigateTo({
+            url: `/pages/userProfile/userProfile?id=${props.cardInfo.user.id}`
+        })
+    }
+}
+
 // 编辑菜单相关函数
 // 切换编辑菜单显示状态
 const toggleEditMenu = () => {
     uni.vibrateShort()
+
+    // 如果当前菜单要打开，先通知父组件关闭其他菜单
+    if (!showEditMenu.value) {
+        emit('menuToggle', props.cardInfo.id)
+    }
+
     showEditMenu.value = !showEditMenu.value
 }
 
@@ -293,6 +317,11 @@ const toggleEditMenu = () => {
 const closeEditMenu = () => {
     showEditMenu.value = false
 }
+
+// 暴露给父组件的方法，用于关闭菜单
+defineExpose({
+    closeEditMenu
+})
 
 // 处理编辑操作
 const handleEdit = () => {
@@ -302,28 +331,64 @@ const handleEdit = () => {
 }
 
 // 处理删除操作
-const handleDelete = () => {
-    uni.vibrateShort()
-    closeEditMenu()
+const handleDelete = async () => {
+  uni.vibrateShort()
+  closeEditMenu()
 
-    uni.showModal({
-        title: '确认删除',
-        content: '删除后无法恢复，确定要删除这条帖子吗？',
-        confirmText: '删除',
-        confirmColor: '#ff4757',
-        success: (res) => {
-            if (res.confirm) {
-                emit('delete', props.cardInfo.id)
-            }
+  uni.showModal({
+    title: '确认删除',
+    content: '删除后无法恢复，确定要删除这条帖子吗？',
+    confirmText: '删除',
+    confirmColor: '#ff4757',
+    success: async (res) => { // 注意这里也要加 async
+      if (res.confirm) {
+        try {
+          const result = await postApi.deletePost({
+            id: props.cardInfo.id
+          })
+          if (result.code === 0) {
+            emit('delete', props.cardInfo.id)
+            uni.showToast({
+              title: '已删除',
+              icon: 'success'
+            })
+          } else {
+            uni.showToast({
+              title: '删除失败',
+              icon: 'error'
+            })
+          }
+        } catch (error) {
+          console.error('删除请求失败:', error)
+          uni.showToast({
+            title: '删除失败',
+            icon: 'error'
+          })
         }
-    })
+      }
+    }
+  })
 }
 
 // 处理修改可见范围操作
-const handleVisibilityChange = () => {
+const handleVisibilityChange = (action: string) => {
     uni.vibrateShort()
     closeEditMenu()
-    emit('visibilityChange', props.cardInfo.id)
+
+    // 先更新本地状态以提供即时反馈
+    const originalIsPublic = props.cardInfo.isPublic
+
+    if (action === 'public') {
+        // 设为公开
+        props.cardInfo.isPublic = 1
+    } else if (action === 'private') {
+        // 设为私密
+        props.cardInfo.isPublic = 0
+    }
+
+    // 触发父组件事件，传递操作类型和帖子ID
+    // 父组件负责调用API，如果失败会回滚状态
+    emit('visibilityChange', props.cardInfo.id, action)
 }
 </script>
 

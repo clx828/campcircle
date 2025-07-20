@@ -75,6 +75,10 @@ public class PostController {
         post.setUserId(loginUser.getId());
         post.setFavourNum(0);
         post.setThumbNum(0);
+        // 如果没有设置isPublic，默认为公开
+        if (post.getIsPublic() == null) {
+            post.setIsPublic(1);
+        }
         boolean result = postService.save(post);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         long newPostId = post.getId();
@@ -113,11 +117,13 @@ public class PostController {
      * @return
      */
     @PostMapping("/update")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> updatePost(@RequestBody PostUpdateRequest postUpdateRequest) {
+    @AuthCheck(mustRole = UserConstant.DEFAULT_ROLE)
+    public BaseResponse<Boolean> updatePost(@RequestBody PostUpdateRequest postUpdateRequest, HttpServletRequest request) {
         if (postUpdateRequest == null || postUpdateRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        // 获取当前 用户
+        User loginUser = userService.getLoginUser(request);
         Post post = new Post();
         BeanUtils.copyProperties(postUpdateRequest, post);
         List<String> tags = postUpdateRequest.getTags();
@@ -130,6 +136,10 @@ public class PostController {
         // 判断是否存在
         Post oldPost = postService.getById(id);
         ThrowUtils.throwIf(oldPost == null, ErrorCode.NOT_FOUND_ERROR);
+        // 仅本人或管理员可修改
+        if (!oldPost.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
         boolean result = postService.updateById(post);
         return ResultUtils.success(result);
     }
@@ -149,6 +159,20 @@ public class PostController {
         if (post == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
+
+        // 检查帖子是否公开，如果不公开，只有帖子作者和管理员可以查看
+        User loginUser = userService.getLoginUserPermitNull(request);
+        if (post.getIsPublic() != null && post.getIsPublic() == 0) {
+            // 帖子不公开，需要验证权限
+            if (loginUser == null) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "该帖子不公开");
+            }
+            // 不是帖子作者且不是管理员，无权查看
+            if (!post.getUserId().equals(loginUser.getId()) && !userService.isAdmin(loginUser)) {
+                throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "该帖子不公开");
+            }
+        }
+
         return ResultUtils.success(postService.getPostVO(post, request));
     }
 
@@ -182,6 +206,14 @@ public class PostController {
         long size = postQueryRequest.getPageSize();
         // 限制爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+
+        // 如果不是管理员，只能查看公开的帖子
+        User loginUser = userService.getLoginUserPermitNull(request);
+        if (loginUser == null || !userService.isAdmin(loginUser)) {
+            // 强制设置为只查询公开的帖子
+            postQueryRequest.setIsPublic(1);
+        }
+
         Page<Post> postPage = postService.page(new Page<>(current, size),
                 postService.getQueryWrapper(postQueryRequest));
         return ResultUtils.success(postService.getPostVOPage(postPage, request));
@@ -226,6 +258,14 @@ public class PostController {
         long size = postQueryRequest.getPageSize();
         // 限制爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
+
+        // 如果不是管理员，只能搜索公开的帖子
+        User loginUser = userService.getLoginUserPermitNull(request);
+        if (loginUser == null || !userService.isAdmin(loginUser)) {
+            // 强制设置为只搜索公开的帖子
+            postQueryRequest.setIsPublic(1);
+        }
+
         Page<Post> postPage = postService.searchFromEs(postQueryRequest);
         return ResultUtils.success(postService.getPostVOPage(postPage, request));
     }

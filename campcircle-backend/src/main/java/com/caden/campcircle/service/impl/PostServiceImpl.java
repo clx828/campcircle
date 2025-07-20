@@ -120,6 +120,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         List<String> tagList = postQueryRequest.getTags();
         Long userId = postQueryRequest.getUserId();
         Long notId = postQueryRequest.getNotId();
+        Integer isPublic = postQueryRequest.getIsPublic();
         // 拼接查询条件
         if (StringUtils.isNotBlank(searchText)) {
             queryWrapper.and(qw -> qw.like("title", searchText).or().like("content", searchText));
@@ -133,7 +134,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         queryWrapper.ne(ObjectUtils.isNotEmpty(notId), "id", notId);
         queryWrapper.eq(ObjectUtils.isNotEmpty(id), "id", id);
         queryWrapper.eq(ObjectUtils.isNotEmpty(userId), "userId", userId);
-        
+        queryWrapper.eq(ObjectUtils.isNotEmpty(isPublic), "isPublic", isPublic);
+
         // 先按置顶状态降序排序，再按其他条件排序
         queryWrapper.orderByDesc("isTop");
 
@@ -157,6 +159,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         List<String> tagList = postQueryRequest.getTags();
         List<String> orTagList = postQueryRequest.getOrTags();
         Long userId = postQueryRequest.getUserId();
+        Integer isPublic = postQueryRequest.getIsPublic();
         // es 起始页为 0
         long current = postQueryRequest.getCurrent() - 1;
         long pageSize = postQueryRequest.getPageSize();
@@ -173,6 +176,9 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }
         if (userId != null) {
             boolQueryBuilder.filter(QueryBuilders.termQuery("userId", userId));
+        }
+        if (isPublic != null) {
+            boolQueryBuilder.filter(QueryBuilders.termQuery("isPublic", isPublic));
         }
         // 必须包含所有标签
         if (CollUtil.isNotEmpty(tagList)) {
@@ -460,6 +466,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         QueryWrapper<Post> queryWrapper = new QueryWrapper<>();
         queryWrapper.select("id", "content", "hotScore", "lastHotUpdateTime")
                     .eq("isDelete", 0)
+                    .eq("isPublic", 1)  // 只查询公开的帖子
                     .orderByDesc("hotScore")
                     .last("limit " + limit);
         
@@ -478,7 +485,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     public Page<PostVO> listPostVOByPage(PageSearchByKeyWord pageSearchByKeyWord, HttpServletRequest request) {
         String keyWord = pageSearchByKeyWord.getKeyWord();
         QueryWrapper<Post> queryWrapper = new QueryWrapper<>();
-        queryWrapper.like(StringUtils.isNotBlank(keyWord), "content", keyWord);
+        queryWrapper.like(StringUtils.isNotBlank(keyWord), "content", keyWord)
+                   .eq("isPublic", 1);  // 只搜索公开的帖子
         Page<Post> postPage = this.page(new Page<>(pageSearchByKeyWord.getCurrent(), pageSearchByKeyWord.getPageSize()), queryWrapper);
         if (postPage.getTotal() == 0){
             return new Page<>();

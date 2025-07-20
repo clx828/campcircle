@@ -25,7 +25,18 @@
       <!-- 热度排行榜 -->
       <HotPostRanking :limit="9" :pageSize="3" />
       <view class="post-list">
-        <SocialCard v-for="post in postList" :key="post.id" :cardInfo="post" @share="handleShare(post)" @comment="handleComment" />
+        <SocialCard
+          v-for="post in postList"
+          :key="post.id"
+          :cardInfo="post"
+          :ref="(el) => setSocialCardRef(el, post.id)"
+          @share="handleShare(post)"
+          @comment="handleComment"
+          @edit="handleEdit"
+          @delete="handleDelete"
+          @menuToggle="handleMenuToggle"
+          @visibilityChange="handleVisibilityChange"
+        />
       </view>
       <view v-if="postList.length === 0 && !postLoading" class="empty-tip">
         <text>暂无动态</text>
@@ -220,6 +231,100 @@ function handleCommentSuccess() {
   // 刷新帖子列表
   loadPosts()
   showCommentPopup.value = false
+}
+
+// SocialCard 组件引用管理
+const socialCardRefs = ref(new Map())
+
+// 设置 SocialCard 组件引用
+function setSocialCardRef(el, postId) {
+  if (el) {
+    socialCardRefs.value.set(postId, el)
+  } else {
+    socialCardRefs.value.delete(postId)
+  }
+}
+
+// 处理菜单切换 - 确保一次只能打开一个菜单
+function handleMenuToggle(currentPostId) {
+  // 关闭所有其他菜单
+  socialCardRefs.value.forEach((cardRef, postId) => {
+    if (postId !== currentPostId && cardRef && cardRef.closeEditMenu) {
+      cardRef.closeEditMenu()
+    }
+  })
+}
+
+// 处理可见性变更
+async function handleVisibilityChange(postId, action) {
+  console.log(`帖子 ${postId} 执行操作: ${action}`)
+
+  try {
+    if (action === 'public' || action === 'private') {
+      // 调用后端API更新帖子的可见性
+      const updateParams = {
+        id: postId,
+        isPublic: action === 'public' ? 1 : 0
+      }
+
+      const response = await postApi.updatePost(updateParams)
+
+      if (response.code === 0) {
+        uni.showToast({
+          title: action === 'public' ? '已设为公开' : '已设为私密',
+          icon: 'success'
+        })
+      } else {
+        // API调用成功但业务失败，回滚本地状态
+        const targetPost = postList.value.find(post => post.id === postId)
+        if (targetPost) {
+          targetPost.isPublic = action === 'public' ? 0 : 1
+        }
+        uni.showToast({
+          title: response.message || '操作失败',
+          icon: 'error'
+        })
+      }
+    } else if (action === 'top') {
+      // 置顶功能暂时显示提示
+      uni.showToast({
+        title: '置顶功能开发中',
+        icon: 'none'
+      })
+    }
+  } catch (error) {
+    console.error('更新帖子状态失败:', error)
+
+    // API调用失败，回滚本地状态
+    const targetPost = postList.value.find(post => post.id === postId)
+    if (targetPost && (action === 'public' || action === 'private')) {
+      targetPost.isPublic = action === 'public' ? 0 : 1
+    }
+
+    uni.showToast({
+      title: '网络错误，请重试',
+      icon: 'error'
+    })
+  }
+}
+
+// 处理编辑事件
+function handleEdit(postId) {
+  console.log('编辑帖子:', postId)
+  // 跳转到编辑页面
+  uni.navigateTo({
+    url: `/pages/editPost/editPost?id=${postId}`
+  })
+}
+
+// 处理删除事件
+function handleDelete(postId) {
+  console.log('删除帖子:', postId)
+  // 从列表中移除已删除的帖子
+  const index = postList.value.findIndex(post => post.id === postId)
+  if (index !== -1) {
+    postList.value.splice(index, 1)
+  }
 }
 
 

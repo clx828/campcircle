@@ -2,8 +2,8 @@
     <view class="login-container">
         <!-- 背景滚动区域 -->
         <view class="background-scroll">
-            <image class="background-image bg-1" src="/static/img/loginbg.jpg" mode="aspectFill"></image>
-            <image class="background-image bg-2" src="/static/img/loginbg.jpg" mode="aspectFill"></image>
+            <image class="background-image bg-1" src="https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-07-18_762a65b2-ce9a-4461-9d1f-82e69206520a.jpg" mode="aspectFill"></image>
+            <image class="background-image bg-2" src="https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-07-18_762a65b2-ce9a-4461-9d1f-82e69206520a.jpg" mode="aspectFill"></image>
         </view>
 
         <!-- 内容区域 -->
@@ -11,7 +11,7 @@
             <!-- Logo区域 -->
             <view class="logo-area">
                 <image class="logo"
-                    src="https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png"
+                    src="../../static/img/tabbar/home.png"
                     mode="aspectFit" />
                 <text class="slogan">探索精彩，分享生活</text>
             </view>
@@ -114,14 +114,18 @@ const handleLogin = async () => {
         const loginRes = await new Promise((resolve, reject) => {
             uni.login({
                 provider: 'weixin',
-                success: resolve,
+                success: (result) => {
+                    console.log('微信登录结果:', result)
+                    resolve(result)
+                },
                 fail: reject
             })
         })
 
-        const res = await userApi.login({
-            code: loginRes.code,
-        })
+        console.log('loginRes:', loginRes)
+        console.log('loginRes.code:', loginRes.code)
+
+        const res = await userApi.loginByWxMiniapp(loginRes.code)
 
         // 隐藏加载提示
         uni.hideLoading()

@@ -1,8 +1,8 @@
-import { useUserStore } from '@/stores/userStore'
+import { useUserStore } from '@/stores/userStore' 
 
 // // API 基础URL
-// const BASE_URL = 'http://192.168.1.8:8101/api'
-const BASE_URL = 'http://106.55.158.97:8101/api'
+const BASE_URL = 'http://192.168.1.9:8101/api'
+// const BASE_URL = 'http://106.55.158.97:8101/api'
 
 // 请求配置接口
 interface RequestConfig extends UniApp.RequestOptions {

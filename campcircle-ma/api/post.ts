@@ -39,22 +39,39 @@ export interface DoPostFavourParams {
 }
 
 export interface DeletePostParams {
-    /* */
     id?: string;
 }
-// 参数接口
+
+// 编辑帖子参数接口
 export interface EditPostParams {
-    /* */
     content?: string;
-
-    /* */
     id?: number;
+    pictureList?: string[];
+    tags?: string[];
+}
 
-    /* */
-    pictureList?: Record<string, unknown>[];
+// 更新帖子参数接口
+export interface UpdatePostParams {
+    content?: string;
+    id?: string;
+    isPublic?: number;
+    tags?: string[];
+    pictureList?: string[];
+}
 
-    /* */
-    tags?: Record<string, unknown>[];
+// 帖子置顶请求参数
+export interface PostTopRequest {
+    postId: number;
+    topTimeHours?: number;
+}
+
+// 分页搜索参数
+export interface PageSearchByKeyWord {
+    current?: number;
+    pageSize?: number;
+    keyWord?: string;
+    sortField?: string;
+    sortOrder?: string;
 }
 // 用户相关API
 export const postApi = {
@@ -72,7 +89,9 @@ export const postApi = {
     addPost(addPostParams: addPostParams) {
         return request.post('/post/add', addPostParams)
     },
-
+    deletePost(deletePostParams: DeletePostParams) {
+        return request.post('/post/delete', deletePostParams);
+    },
     // 点赞/取消点赞
     doThumb(doThumbParams: DoThumbParams) {
         return request.post('/post_thumb/', doThumbParams)
@@ -109,20 +128,43 @@ export const postApi = {
     },
 
     // 根据ID获取帖子详情
-    getPostById(id: string | number) {
-        return request.get(`/post/get/vo/?id=${id}`)
-    },
-    deletePost(deletePostParams: DeletePostParams) {
-        return request.post(`/api/post/delete`, deletePostParams);
+    getPostVOById(id: number) {
+        return request.get(`/post/get/vo?id=${id}`)
     },
 
-    editPost(editPostParams:EditPostParams) {
-    return request.post(`/api/post/edit`, editPostParams);
+    // 编辑帖子
+    editPost(postEditRequest: EditPostParams) {
+        return request.post('/post/edit', postEditRequest)
     },
-	getHotPostList(limit:number) {
-	  return request.get(`/post/get/hot/post/list?limit=${limit}`);
-	},
-    searchPostVOByKeyword(current, keyWord, pageSize, sortField, sortOrder) {
-        return request.get(`/post/search/by/keyword?current=${current}&keyWord=${keyWord}&pageSize=${pageSize}&sortField=${sortField}&sortOrder=${sortOrder}`);
+
+    // 更新帖子（需要管理员权限，但保留接口）
+    updatePost(postUpdateRequest: UpdatePostParams) {
+        return request.post('/post/update', postUpdateRequest)
+    },
+
+    // 分页搜索帖子（从ES查询）
+    searchPostVOByPage(postQueryRequest: ListPostVOByPageParams) {
+        return request.post('/post/search/page/vo', postQueryRequest)
+    },
+
+    // 置顶/取消置顶帖子
+    topPost(postTopRequest: PostTopRequest) {
+        return request.post('/post/top', postTopRequest)
+    },
+
+    // 获取热门帖子列表
+    getHotPostList(limit: number = 10) {
+        return request.get(`/post/get/hot/post/list?limit=${limit}`)
+    },
+
+    // 根据关键词搜索帖子
+    searchPostVOByKeyword(pageSearchByKeyWord: PageSearchByKeyWord) {
+        return request.get('/post/search/by/keyword', pageSearchByKeyWord)
+    },
+
+    // 兼容旧版本的搜索方法
+    searchByKeyword(current: number, keyWord: string, pageSize: number, sortField?: string, sortOrder?: string) {
+        return request.get(`/post/search/by/keyword?current=${current}&keyWord=${keyWord}&pageSize=${pageSize}&sortField=${sortField || ''}&sortOrder=${sortOrder || ''}`)
     }
+
 }

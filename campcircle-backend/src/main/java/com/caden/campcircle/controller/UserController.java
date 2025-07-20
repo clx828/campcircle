@@ -290,8 +290,11 @@ public class UserController {
     @GetMapping("/get/vo")
     @ApiOperation(value = "根据ID获取用户包装类", notes = "获取用户的脱敏信息")
     public BaseResponse<UserVO> getUserVOById(@ApiParam(value = "用户ID", required = true) long id, HttpServletRequest request) {
-        BaseResponse<User> response = getUserById(id, request);
-        User user = response.getData();
+        if (id <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User user = userService.getById(id);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_FOUND_ERROR);
         return ResultUtils.success(userService.getUserVO(user));
     }
 

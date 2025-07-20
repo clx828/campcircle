@@ -103,6 +103,14 @@
 				"enablePullDownRefresh": false,
 				"backgroundColor": "#fdf4f4"
 			}
+		},
+		{
+			"path": "pages/userProfile/userProfile",
+			"style": {
+				"navigationBarTitleText": "用户主页",
+				"navigationStyle": "custom",
+				"navigationBarTextStyle": "white"
+			}
 		}
 	],
 

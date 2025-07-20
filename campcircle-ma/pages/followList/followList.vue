@@ -182,7 +182,7 @@ const goBack = () => {
 const goToUserProfile = (item: any) => {
     const userId = isFans.value ? item.fansUserVO?.id : item.followUserVO?.id
     uni.navigateTo({
-        url: `/pages/user/profile?id=${userId}`
+        url: `/pages/userProfile/userProfile?id=${userId}`
     })
 }
 

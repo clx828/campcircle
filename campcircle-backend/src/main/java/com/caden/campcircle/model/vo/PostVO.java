@@ -112,6 +112,11 @@ public class PostVO implements Serializable {
     private Double hotScore;
 
     /**
+     * 是否公开：0-否，1-是
+     */
+    private Integer isPublic;
+
+    /**
      * 包装类转对象
      *
      * @param postVO
