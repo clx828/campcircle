@@ -174,9 +174,9 @@ const fetchFollowNums = async () => {
   try {
     const res = await followApi.getMyFollowNum()
     if (res.code === 0 && res.data) {
-      followNum.value = Number(res.data.followNum)
-      fansNum.value = Number(res.data.fansNum)
-      thumbNum2.value = Number(res.data.thumbNum)
+      followNum.value = Number(res.data.followingCount)
+      fansNum.value = Number(res.data.followersCount)
+      thumbNum2.value = Number(res.data.likesCount)
     }
   } catch (error) {
     console.error('获取关注/粉丝/被喜欢数失败:', error)

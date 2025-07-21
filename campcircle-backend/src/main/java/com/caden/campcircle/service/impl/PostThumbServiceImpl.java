@@ -12,6 +12,9 @@ import com.caden.campcircle.model.entity.User;
 import com.caden.campcircle.service.PostService;
 import com.caden.campcircle.service.PostThumbService;
 import javax.annotation.Resource;
+
+import com.caden.campcircle.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
  *
  
  */
+@Slf4j
 @Service
 public class PostThumbServiceImpl extends ServiceImpl<PostThumbMapper, PostThumb>
         implements PostThumbService {
@@ -28,6 +32,8 @@ public class PostThumbServiceImpl extends ServiceImpl<PostThumbMapper, PostThumb
     @Resource
     private PostService postService;
 
+    @Resource
+    private UserService userService;
     /**
      * 点赞
      *
@@ -76,9 +82,14 @@ public class PostThumbServiceImpl extends ServiceImpl<PostThumbMapper, PostThumb
         postThumb.setPostId(postId);
         QueryWrapper<PostThumb> thumbQueryWrapper = new QueryWrapper<>(postThumb);
         PostThumb oldPostThumb = this.getOne(thumbQueryWrapper);
+        Post post = postService.getById(postId);
+        if (post == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "帖子不存在");
+        }
         boolean result;
         // 已点赞
         if (oldPostThumb != null) {
+
             result = this.remove(thumbQueryWrapper);
             if (result) {
                 // 点赞数 - 1
@@ -87,6 +98,14 @@ public class PostThumbServiceImpl extends ServiceImpl<PostThumbMapper, PostThumb
                         .gt("thumbNum", 0)
                         .setSql("thumbNum = thumbNum - 1")
                         .update();
+                // 帖子作者获赞数 - 1\
+                log.info("帖子作者获赞数 - 1");
+                userService.update()
+                        .eq("id", post.getUserId())
+                        .gt("receivedThumbNum", 0)
+                        .setSql("receivedThumbNum = receivedThumbNum - 1")
+                        .update();
+
                 return result ? -1 : 0;
             } else {
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR);
@@ -99,6 +118,11 @@ public class PostThumbServiceImpl extends ServiceImpl<PostThumbMapper, PostThumb
                 result = postService.update()
                         .eq("id", postId)
                         .setSql("thumbNum = thumbNum + 1")
+                        .update();
+                // 帖子作者获赞数 + 1
+                userService.update()
+                        .eq("id", post.getUserId())
+                        .setSql("receivedThumbNum = receivedThumbNum + 1")
                         .update();
                 return result ? 1 : 0;
             } else {

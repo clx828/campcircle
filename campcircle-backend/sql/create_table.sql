@@ -32,6 +32,9 @@ create table if not exists user
     index idx_unionId (unionId)
 ) comment '用户' collate = utf8mb4_unicode_ci;
 
+-- 在用户表中添加获赞数字段
+ALTER TABLE user ADD COLUMN receivedThumbNum INT DEFAULT 0 NOT NULL COMMENT '获赞总数';
+
 -- 帖子表
 create table if not exists post
 (

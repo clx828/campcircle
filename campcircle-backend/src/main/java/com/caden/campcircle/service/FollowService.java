@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.caden.campcircle.common.PageRequest;
 import com.caden.campcircle.model.entity.Follow;
 import com.caden.campcircle.model.vo.FansVO;
-import com.caden.campcircle.model.vo.FollowNum;
+import com.caden.campcircle.model.vo.UserStatisticsVO;
 import com.caden.campcircle.model.vo.FollowVO;
 import com.caden.campcircle.model.vo.PostVO;
 
@@ -61,12 +61,21 @@ public interface FollowService extends IService<Follow> {
     Page<FansVO> getListFansVO(Page<Follow> page, long userId);
 
     /**
-     * 获取用户关注数、粉丝数、获赞数
+     * 获取用户统计信息（关注数、粉丝数、获赞数）
      *
      * @param id 用户id
-     * @return 用户关注数、粉丝数、获赞数
+     * @return 用户统计信息
      */
-    FollowNum getFollowNum(Long id);
+    UserStatisticsVO getUserStatistics(Long id);
+
+    /**
+     * 获取用户统计信息（兼容性方法）
+     * @deprecated 请使用 getUserStatistics 方法
+     */
+    @Deprecated
+    default UserStatisticsVO getFollowNum(Long id) {
+        return getUserStatistics(id);
+    }
 
     Page<PostVO> listMyFollowPost(PageRequest pageRequest, HttpServletRequest request);
 }

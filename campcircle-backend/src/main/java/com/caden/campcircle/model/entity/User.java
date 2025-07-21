@@ -58,10 +58,23 @@ public class User implements Serializable {
      * 用户简介
      */
     private String userProfile;
+    /**
+     * 性别
+     */
     private int gender;
+
+    /**
+     * 学校
+     */
     private String school;
-     private int followNum;
-      private int fansNum;
+    /**
+     * 关注数
+     */
+    private Integer followNum;
+    /**
+     * 粉丝数
+     */
+    private Integer fansNum;
     /**
      * 用户角色：user/admin/ban
      */
@@ -82,6 +95,11 @@ public class User implements Serializable {
      */
     @TableLogic
     private Integer isDelete;
+
+    /**
+     * 获赞总数
+     */
+    private Integer receivedThumbNum;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

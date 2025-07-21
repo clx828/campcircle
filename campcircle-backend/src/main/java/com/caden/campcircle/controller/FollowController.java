@@ -10,7 +10,7 @@ import com.caden.campcircle.exception.BusinessException;
 import com.caden.campcircle.model.entity.Follow;
 import com.caden.campcircle.model.entity.User;
 import com.caden.campcircle.model.vo.FansVO;
-import com.caden.campcircle.model.vo.FollowNum;
+import com.caden.campcircle.model.vo.UserStatisticsVO;
 import com.caden.campcircle.model.vo.FollowVO;
 import com.caden.campcircle.model.vo.PostVO;
 import com.caden.campcircle.service.FollowService;
@@ -122,35 +122,36 @@ public class FollowController {
         return ResultUtils.success(result);
     }
     /**
-     * 获取关注数和粉丝数
+     * 获取我的统计信息（关注数、粉丝数、获赞数）
      *
-     * @param request
-     * @return
+     * @param request HTTP请求
+     * @return 用户统计信息
      */
-    @GetMapping("/get/my/num")
-    public BaseResponse<FollowNum> getFollowNum(HttpServletRequest request) {
+    @GetMapping("/get/my/statistics")
+    @ApiOperation(value = "获取我的统计信息", notes = "获取当前用户的关注数、粉丝数、获赞数")
+    public BaseResponse<UserStatisticsVO> getMyStatistics(HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
         if (loginUser == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }
-        FollowNum followNum = followService.getFollowNum(loginUser.getId());
-        return ResultUtils.success(followNum);
+        UserStatisticsVO userStatistics = followService.getUserStatistics(loginUser.getId());
+        return ResultUtils.success(userStatistics);
     }
 
     /**
-     * 获取指定用户的关注数和粉丝数
+     * 获取指定用户的统计信息（关注数、粉丝数、获赞数）
      *
      * @param userId 用户ID
-     * @return 关注数和粉丝数
+     * @return 用户统计信息
      */
-    @GetMapping("/get/user/num")
-    @ApiOperation(value = "获取指定用户的关注数和粉丝数", notes = "获取指定用户的关注数、粉丝数、获赞数")
-    public BaseResponse<FollowNum> getUserFollowNum(@RequestParam @ApiParam(value = "用户ID", required = true) Long userId) {
+    @GetMapping("/get/user/statistics")
+    @ApiOperation(value = "获取指定用户的统计信息", notes = "获取指定用户的关注数、粉丝数、获赞数")
+    public BaseResponse<UserStatisticsVO> getUserStatistics(@RequestParam @ApiParam(value = "用户ID", required = true) Long userId) {
         if (userId <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        FollowNum followNum = followService.getFollowNum(userId);
-        return ResultUtils.success(followNum);
+        UserStatisticsVO userStatistics = followService.getUserStatistics(userId);
+        return ResultUtils.success(userStatistics);
     }
 
     /**
@@ -189,5 +190,29 @@ public class FollowController {
         User loginUser = userService.getLoginUser(request);
         Page<PostVO> result = followService.listMyFollowPost(pageRequest, request);
         return ResultUtils.success(result);
+    }
+
+    // ========== 兼容性接口（已废弃，建议使用新接口） ==========
+
+    /**
+     * 获取我的统计信息（兼容性接口）
+     * @deprecated 请使用 /get/my/statistics 接口
+     */
+    @GetMapping("/get/my/num")
+    @ApiOperation(value = "获取我的统计信息（已废弃）", notes = "已废弃，请使用 /get/my/statistics 接口")
+    @Deprecated
+    public BaseResponse<UserStatisticsVO> getFollowNum(HttpServletRequest request) {
+        return getMyStatistics(request);
+    }
+
+    /**
+     * 获取指定用户的统计信息（兼容性接口）
+     * @deprecated 请使用 /get/user/statistics 接口
+     */
+    @GetMapping("/get/user/num")
+    @ApiOperation(value = "获取指定用户的统计信息（已废弃）", notes = "已废弃，请使用 /get/user/statistics 接口")
+    @Deprecated
+    public BaseResponse<UserStatisticsVO> getUserFollowNum(@RequestParam @ApiParam(value = "用户ID", required = true) Long userId) {
+        return getUserStatistics(userId);
     }
 }

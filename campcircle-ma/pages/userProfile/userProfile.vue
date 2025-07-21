@@ -55,10 +55,10 @@
             <!-- 操作按钮 -->
             <wd-col :span="8" :offset="4">
               <view class="action-buttons">
-                <wd-button 
-                  :type="isFollowed ? 'default' : 'primary'" 
-                  size="small" 
-                  class="follow-btn" 
+                <wd-button
+                  :type="isFollowed ? 'info' : 'primary'"
+                  size="small"
+                  :class="['follow-btn', { 'followed-btn': isFollowed }]"
                   @click="handleFollow"
                   :loading="followLoading"
                 >
@@ -214,9 +214,9 @@ const fetchUserStats = async () => {
   try {
     const res = await followApi.getUserFollowNum(userId.value)
     if (res.code === 0 && res.data) {
-      followNum.value = Number(res.data.followNum || 0)
-      fansNum.value = Number(res.data.fansNum || 0)
-      thumbNum.value = Number(res.data.thumbNum || 0)
+      followNum.value = Number(res.data.followingCount || 0)
+      fansNum.value = Number(res.data.followersCount || 0)
+      thumbNum.value = Number(res.data.likesCount || 0)
     }
   } catch (error) {
     console.error('获取用户统计数据失败:', error)
@@ -632,6 +632,17 @@ onShareTimeline(() => {
 
   .follow-btn, .message-btn {
     min-width: 60px;
+  }
+
+  // 已关注按钮样式优化
+  .followed-btn {
+    :deep(.wd-button) {
+      background-color: rgba(255, 255, 255, 0.9) !important;
+      color: #666666 !important;
+      border: 1px solid rgba(255, 255, 255, 0.8) !important;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
   }
 }
 

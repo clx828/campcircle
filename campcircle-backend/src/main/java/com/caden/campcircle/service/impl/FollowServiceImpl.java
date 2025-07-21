@@ -9,7 +9,7 @@ import com.caden.campcircle.exception.BusinessException;
 import com.caden.campcircle.mapper.FollowMapper;
 import com.caden.campcircle.model.entity.*;
 import com.caden.campcircle.model.vo.FansVO;
-import com.caden.campcircle.model.vo.FollowNum;
+import com.caden.campcircle.model.vo.UserStatisticsVO;
 import com.caden.campcircle.model.vo.FollowVO;
 import com.caden.campcircle.model.vo.PostVO;
 import com.caden.campcircle.service.FollowService;
@@ -162,12 +162,16 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
     }
 
     @Override
-    public FollowNum getFollowNum(Long id) {
-        FollowNum followNum = new FollowNum();
-        followNum.setFollowNum(this.count(new QueryWrapper<Follow>().eq("userId", id)));
-        followNum.setFansNum(this.count(new QueryWrapper<Follow>().eq("followUserId", id)));
-        followNum.setThumbNum(postThumbService.count(new QueryWrapper<PostThumb>().eq("userId", id)));
-        return followNum;
+    public UserStatisticsVO getUserStatistics(Long id) {
+        UserStatisticsVO userStatistics = new UserStatisticsVO();
+        
+        // 直接从用户表获取所有统计数据
+        User user = userService.getById(id);
+        userStatistics.setFollowingCount(user.getFollowNum().longValue());
+        userStatistics.setFollowersCount(user.getFansNum().longValue());
+        userStatistics.setLikesCount(user.getReceivedThumbNum().longValue());
+        
+        return userStatistics;
     }
 
     @Override
