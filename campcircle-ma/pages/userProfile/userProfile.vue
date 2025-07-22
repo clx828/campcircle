@@ -6,9 +6,13 @@
 
   <scroll-view class="profile-page" scroll-y="true" @scroll="onScrollThrottled" @scrolltolower="loadMore"
     refresher-enabled="true" :refresher-triggered="refresherTriggered" @refresherrefresh="onRefresh"
-    refresher-background="#ffffff">
+    refresher-background="#ffffff"
+    @refresherpulling="onRefresherPulling"
+    @refresherrestore="onRefresherRestore">
     <!-- 用户信息区域 -->
     <view class="user-header">
+      <!-- 背景图片 -->
+      <image :src="userInfo.backgroundUrl || userInfo.userAvatar" class="bg-image" mode="aspectFill" :style="bgImageStyle"></image>
       <view class="user-header__overlay">
         <!-- 返回按钮 -->
         <view class="back-button" @click="goBack">
@@ -335,6 +339,46 @@ const onRefresh = async () => {
   }
 }
 
+// ===== 背景图片动画相关 =====
+const bgImageStyle = ref({
+  transform: 'scale(1)',
+  transformOrigin: 'center top',
+  transition: 'transform 0.3s ease-out'
+})
+
+// 下拉刷新时的背景图片缩放
+const pullDistance = ref(0)
+
+// 处理下拉刷新拉动
+const onRefresherPulling = (e) => {
+  const distance = e.detail.dy || 0
+  pullDistance.value = Math.max(0, distance)
+
+  // 计算缩放比例，最大放大30%
+  const maxDistance = 120
+  const normalizedDistance = Math.min(distance / maxDistance, 1)
+
+  // 使用缓动函数让效果更自然
+  const easeOutQuart = 1 - Math.pow(1 - normalizedDistance, 4)
+  const finalScale = 1 + easeOutQuart * 0.3
+
+  bgImageStyle.value = {
+    transform: `scale(${finalScale})`,
+    transformOrigin: 'center top',
+    transition: 'none' // 拉动时不要过渡动画
+  }
+}
+
+// 处理下拉刷新恢复
+const onRefresherRestore = () => {
+  pullDistance.value = 0
+  bgImageStyle.value = {
+    transform: 'scale(1)',
+    transformOrigin: 'center top',
+    transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)' // 丝滑的恢复动画
+  }
+}
+
 // ===== 滚动监听相关 =====
 const isAtTop = ref(true)
 const scrollTop = ref(0)
@@ -499,14 +543,23 @@ onShareTimeline(() => {
 // ===== 用户头部区域 =====
 .user-header {
   min-height: 40vh;
-  background-image: url("https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/public/1898735003367223297/2025-05-11_2f217692-cb17-4c64-8bcb-8afd1ed14b5a.webp");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
   position: relative;
   padding-top: var(--status-bar-height, 44px);
   box-sizing: border-box;
   overflow: hidden;
+
+  // 背景图片
+  .bg-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 120%; // 增加高度以支持放大效果
+    z-index: 0;
+    object-fit: cover;
+    transform-origin: center top;
+    transition: transform 0.1s ease-out; // 备用过渡效果
+  }
 
   &::before {
     content: "";

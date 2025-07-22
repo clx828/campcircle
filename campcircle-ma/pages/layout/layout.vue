@@ -4,7 +4,7 @@
       <Home v-if="activeTab === 0" />
       <Follow v-else-if="activeTab === 1" />
       <Publish v-else-if="activeTab === 2" />
-      <Info v-else-if="activeTab === 3" />
+      <Message v-else-if="activeTab === 3" />
       <Mine v-else-if="activeTab === 4" />
     </view>
 
@@ -70,7 +70,7 @@ import {onMounted, ref} from 'vue'
 import Home from '/pages/tabbar/home/home.vue'
 import Follow from '/pages/tabbar/follow/follow.vue'
 import Publish from '/pages/tabbar/release/release.vue'
-import Info from '/pages/tabbar/info/info.vue'
+import Message from '/pages/tabbar/message/message.vue'
 import Mine from '/pages/tabbar/mine/mine.vue'
 import { useUserStore } from '@/stores/userStore'
 import { onShow, onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app'
@@ -93,7 +93,7 @@ const tabPages = ref([
     needLogin: true,
   },
   {
-    path: '/pages/tabbar/info/info',
+    path: '/pages/tabbar/message/message',
     needLogin: true,
   },
   {

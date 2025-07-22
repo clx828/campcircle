@@ -13,6 +13,7 @@ import com.caden.campcircle.service.PostService;
 import com.caden.campcircle.service.PostThumbService;
 import javax.annotation.Resource;
 
+import com.caden.campcircle.service.SystemMessageService;
 import com.caden.campcircle.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.framework.AopContext;
@@ -34,6 +35,9 @@ public class PostThumbServiceImpl extends ServiceImpl<PostThumbMapper, PostThumb
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private SystemMessageService systemMessageService;
     /**
      * 点赞
      *
@@ -124,6 +128,14 @@ public class PostThumbServiceImpl extends ServiceImpl<PostThumbMapper, PostThumb
                         .eq("id", post.getUserId())
                         .setSql("receivedThumbNum = receivedThumbNum + 1")
                         .update();
+
+                // 发送点赞通知
+                try {
+                    systemMessageService.sendThumbNotification(userId, post.getUserId(), postId);
+                } catch (Exception e) {
+                    log.error("发送点赞通知失败", e);
+                }
+
                 return result ? 1 : 0;
             } else {
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR);

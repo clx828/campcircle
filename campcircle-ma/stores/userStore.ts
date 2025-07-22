@@ -5,6 +5,7 @@ interface UserState {
     userName: string
     userAvatar: string
     userProfile: string
+    backgroundUrl: string
     userRole: 'user' | 'admin' | 'ban'
     token: string
 }
@@ -16,6 +17,7 @@ export const useUserStore = defineStore('user', {
         userAvatar: '',
         userProfile: '',
         userRole: 'user',
+        backgroundUrl: '',
         token: ''
     }),
 
@@ -27,6 +29,7 @@ export const useUserStore = defineStore('user', {
                 userName: state.userName,
                 userAvatar: state.userAvatar,
                 userProfile: state.userProfile,
+                backgroundUrl: state.backgroundUrl,
                 userRole: state.userRole,
                 token: state.token
             }
@@ -48,6 +51,7 @@ export const useUserStore = defineStore('user', {
             if (userInfo.userName) this.userName = userInfo.userName
             if (userInfo.userAvatar) this.userAvatar = userInfo.userAvatar
             if (userInfo.userProfile) this.userProfile = userInfo.userProfile
+            if (userInfo.backgroundUrl) this.backgroundUrl = userInfo.backgroundUrl
             if (userInfo.userRole) this.userRole = userInfo.userRole
             if (userInfo.token) this.token = userInfo.token
         },
@@ -58,6 +62,7 @@ export const useUserStore = defineStore('user', {
             this.userName = ''
             this.userAvatar = ''
             this.userProfile = ''
+            this.backgroundUrl = ''
             this.userRole = 'user'
             this.token = ''
         }

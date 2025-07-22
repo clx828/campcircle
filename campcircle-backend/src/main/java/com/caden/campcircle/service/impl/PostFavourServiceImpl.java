@@ -13,7 +13,9 @@ import com.caden.campcircle.model.entity.PostFavour;
 import com.caden.campcircle.model.entity.User;
 import com.caden.campcircle.service.PostFavourService;
 import com.caden.campcircle.service.PostService;
+import com.caden.campcircle.service.SystemMessageService;
 import javax.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,11 +26,15 @@ import org.springframework.transaction.annotation.Transactional;
  
  */
 @Service
+@Slf4j
 public class PostFavourServiceImpl extends ServiceImpl<PostFavourMapper, PostFavour>
         implements PostFavourService {
 
     @Resource
     private PostService postService;
+
+    @Resource
+    private SystemMessageService systemMessageService;
 
     /**
      * 帖子收藏
@@ -110,6 +116,17 @@ public class PostFavourServiceImpl extends ServiceImpl<PostFavourMapper, PostFav
                         .eq("id", postId)
                         .setSql("favourNum = favourNum + 1")
                         .update();
+
+                // 发送收藏通知
+                try {
+                    Post post = postService.getById(postId);
+                    if (post != null) {
+                        systemMessageService.sendFavourNotification(userId, post.getUserId(), postId);
+                    }
+                } catch (Exception e) {
+                    log.error("发送收藏通知失败", e);
+                }
+
                 return result ? 1 : 0;
             } else {
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR);

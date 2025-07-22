@@ -31,6 +31,21 @@ public class UserUpdateRequest implements Serializable {
     private String userProfile;
 
     /**
+     * 性别
+     */
+    private Integer gender;
+
+    /**
+     * 学校
+     */
+    private String school;
+
+    /**
+     * 用户背景URL
+     */
+    private String backgroundUrl;
+
+    /**
      * 用户角色：user/admin/ban
      */
     private String userRole;

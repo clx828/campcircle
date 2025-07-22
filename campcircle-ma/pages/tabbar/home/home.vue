@@ -1,16 +1,15 @@
+
 <template>
   <view class="container">
     <!-- 固定在顶部的搜索容器 -->
     <view class="search-container" :style="headerStyle">
-      <view class="logo" :style="logoStyle">
-        <image
-            src="https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png" />
+      <view class="scan-btn" @click="handleScan">
+        <image src="/static/button/qr/qrscan.png" class="scan-icon" mode="aspectFit"></image>
       </view>
       <view class="search-bar" :style="searchBarStyle" @click="goToSearch">
         <image src="/static/button/shousuo.png" mode="aspectFit" class="search-bar-img" />
         <span class="search-bar-span">搜索</span>
       </view>
-      <view class="placeholder"></view>
     </view>
 
     <!-- 可滚动的内容区域 -->
@@ -380,6 +379,31 @@ onShareTimeline(() => {
   }
 })
 
+// 处理扫码
+const handleScan = () => {
+  uni.vibrateShort()
+  uni.scanCode({
+    success: (res) => {
+      console.log('扫码结果:', res)
+      // 处理扫码结果
+      if (res.result) {
+        // 可以根据扫码结果进行相应处理
+        uni.showToast({
+          title: '扫码成功',
+          icon: 'success'
+        })
+      }
+    },
+    fail: (err) => {
+      console.error('扫码失败:', err)
+      uni.showToast({
+        title: '扫码失败',
+        icon: 'none'
+      })
+    }
+  })
+}
+
 onMounted(() => {
   getSystemInfo()
   loadPosts()
@@ -405,6 +429,9 @@ onMounted(() => {
   padding: 0 20rpx;
   padding-bottom: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
 
   .logo {
     border-radius: 50%;
@@ -423,6 +450,8 @@ onMounted(() => {
     display: flex;
     align-items: center;
     padding: 0 24rpx;
+    flex: 1;
+    height: 72rpx;
   }
 
   .search-bar-img {
@@ -434,10 +463,6 @@ onMounted(() => {
   .search-bar-span {
     color: #9c9c9c;
     font-size: 28rpx;
-  }
-
-  .placeholder {
-    width: 60rpx;
   }
 }
 
@@ -484,5 +509,25 @@ onMounted(() => {
 .bottom-space {
   height: 120rpx; // 为底部tabbar预留空间
   width: 100%;
+}
+
+.scan-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8rpx;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  
+  &:active {
+    transform: scale(0.95);
+    opacity: 0.7;
+  }
+}
+
+.scan-icon {
+  width: 48rpx;
+  height: 48rpx;
+  display: block;
 }
 </style>

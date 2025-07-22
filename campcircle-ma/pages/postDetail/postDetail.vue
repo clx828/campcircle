@@ -179,7 +179,7 @@ const initPage = async () => {
 const loadPostDetail = async () => {
   try {
     loading.value = true
-    const response = await postApi.getPostById(postId.value)
+    const response = await postApi.getPostVOById(postId.value)
     if (response.code === 0) {
       postDetail.value = response.data
     }

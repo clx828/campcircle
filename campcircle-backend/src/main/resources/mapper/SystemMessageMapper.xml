@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.caden.campcircle.mapper.SystemMessageMapper">
+
+    <resultMap id="BaseResultMap" type="com.caden.campcircle.model.entity.SystemMessage">
+        <id property="id" column="id" jdbcType="BIGINT"/>
+        <result property="fromUserId" column="fromUserId" jdbcType="BIGINT"/>
+        <result property="toUserId" column="toUserId" jdbcType="BIGINT"/>
+        <result property="title" column="title" jdbcType="VARCHAR"/>
+        <result property="content" column="content" jdbcType="LONGVARCHAR"/>
+        <result property="type" column="type" jdbcType="TINYINT"/>
+        <result property="postId" column="postId" jdbcType="BIGINT"/>
+        <result property="commentId" column="commentId" jdbcType="BIGINT"/>
+        <result property="status" column="status" jdbcType="TINYINT"/>
+        <result property="isGlobal" column="isGlobal" jdbcType="TINYINT"/>
+        <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+        <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,fromUserId,toUserId,title,content,type,postId,commentId,status,isGlobal,createTime,updateTime,isDelete
+    </sql>
+
+</mapper>

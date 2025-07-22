@@ -16,45 +16,73 @@
     <!-- 主内容区域 -->
     <view class="main-content" :style="{ paddingTop: navbarHeight + 'px' }">
       <!-- 消息列表 -->
-      <scroll-view 
+      <scroll-view
         class="chat-scroll"
         scroll-y
         refresher-enabled
         :refresher-triggered="refresherTriggered"
         @refresherrefresh="onRefresh"
       >
+        <!-- 系统消息功能区 -->
+        <view class="system-message-section">
+          <view class="system-item" @click="handleSystemNotification">
+            <view class="system-icon">
+              <image src="/static/img/notification.png" class="icon-image" />
+            </view>
+            <text class="system-text">系统通知</text>
+            <view v-if="systemUnreadCount.system > 0" class="system-badge">
+              <text class="badge-text">{{ systemUnreadCount.system > 99 ? '99+' : systemUnreadCount.system }}</text>
+            </view>
+          </view>
+
+          <view class="system-item" @click="handleLikeAndFavour">
+            <view class="system-icon">
+              <image src="/static/img/like.png" class="icon-image" />
+            </view>
+            <text class="system-text">赞和收藏</text>
+            <view v-if="(systemUnreadCount.thumb + systemUnreadCount.favour) > 0" class="system-badge">
+              <text class="badge-text">{{ (systemUnreadCount.thumb + systemUnreadCount.favour) > 99 ? '99+' : (systemUnreadCount.thumb + systemUnreadCount.favour) }}</text>
+            </view>
+          </view>
+
+          <view class="system-item" @click="handleCommentAndMention">
+            <view class="system-icon">
+              <image src="/static/img/message.png" class="icon-image" />
+            </view>
+            <text class="system-text">评论和@</text>
+            <view v-if="systemUnreadCount.comment > 0" class="system-badge">
+              <text class="badge-text">{{ systemUnreadCount.comment > 99 ? '99+' : systemUnreadCount.comment }}</text>
+            </view>
+          </view>
+        </view>
+        
         <view class="chat-list">
-          <view 
+          <view
             v-for="chat in chatList"
             :key="chat.chatUserId"
-            class="chat-card"
+            class="chat-item"
             @click="handleChatClick(chat)"
           >
-            <view class="card-inner">
-              <!-- 头像区域 -->
-              <view class="avatar-section">
-                <view class="avatar-wrapper">
-                  <image :src="chat.chatUser.userAvatar" class="avatar-image" />
-                  <view class="online-indicator"></view>
-                </view>
-                <view v-if="chat.unreadCount > 0" class="unread-dot">
-                  <text class="dot-text">{{ chat.unreadCount }}</text>
-                </view>
+            <!-- 头像区域 -->
+            <view class="avatar-section">
+              <image :src="chat.chatUser.userAvatar" class="avatar-image" />
+              <view v-if="chat.unreadCount > 0" class="unread-dot">
+                <text class="dot-text">{{ chat.unreadCount }}</text>
               </view>
+            </view>
 
-              <!-- 内容区域 -->
-              <view class="content-section">
-                <view class="user-info">
-                  <text class="user-name">{{ chat.chatUser.userName }}</text>
-                  <text class="chat-time">{{ formatMessageTime(chat.lastMessage.createTime) }}</text>
-                </view>
-                <view class="message-info">
-                  <text class="message-preview" :class="{ 'recalled-message': chat.lastMessage.isRecalled }">
-                    {{ getMessagePreview(chat.lastMessage) }}
-                  </text>
-                  <view class="message-type-icon" v-if="chat.lastMessage.messageType !== 1">
-                    <text class="type-emoji">{{ getMessageTypeIcon(chat.lastMessage.messageType) }}</text>
-                  </view>
+            <!-- 内容区域 -->
+            <view class="content-section">
+              <view class="user-info">
+                <text class="user-name">{{ chat.chatUser.userName }}</text>
+                <text class="chat-time">{{ formatMessageTime(chat.lastMessage.createTime) }}</text>
+              </view>
+              <view class="message-info">
+                <text class="message-preview" :class="{ 'recalled-message': chat.lastMessage.isRecalled }">
+                  {{ getMessagePreview(chat.lastMessage) }}
+                </text>
+                <view class="message-type-icon" v-if="chat.lastMessage.messageType !== 1">
+                  <text class="type-emoji">{{ getMessageTypeIcon(chat.lastMessage.messageType) }}</text>
                 </view>
               </view>
             </view>
@@ -86,6 +114,7 @@ import { ref, onMounted } from 'vue'
 import { onShow, onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/userStore'
 import { messageApi, type GetChatListRes } from '@/api/message'
+import { systemMessageApi } from '@/api/systemMessage'
 import { formatTime } from '@/utils/format'
 import RouterGuard from '@/utils/routerGuard'
 import EmptyState from '@/components/EmptyState.vue'
@@ -102,6 +131,16 @@ const chatList = ref<GetChatListRes['data']>([])
 const unreadCount = ref(0)
 const loading = ref(false)
 const refresherTriggered = ref(false)
+
+// 系统消息未读数量
+const systemUnreadCount = ref({
+  total: 0,
+  system: 0,
+  thumb: 0,
+  favour: 0,
+  comment: 0,
+  follow: 0
+})
 
 // 获取系统信息
 const getSystemInfo = () => {
@@ -162,6 +201,18 @@ const getMessageTypeIcon = (messageType: number) => {
 
 
 
+// 加载系统消息未读数量
+const loadSystemUnreadCount = async () => {
+  try {
+    const res = await systemMessageApi.getUnreadCount()
+    if (res.code === 0) {
+      systemUnreadCount.value = res.data
+    }
+  } catch (error) {
+    console.error('获取系统消息未读数量失败:', error)
+  }
+}
+
 // 加载消息列表
 const loadChatList = async () => {
   try {
@@ -191,6 +242,37 @@ const loadChatList = async () => {
 const onRefresh = () => {
   refresherTriggered.value = true
   loadChatList()
+  loadSystemUnreadCount()
+}
+
+// 处理系统通知点击
+const handleSystemNotification = () => {
+  uni.vibrateShort()
+  // TODO: 跳转到系统通知页面
+  uni.showToast({
+    title: '系统通知功能开发中',
+    icon: 'none'
+  })
+}
+
+// 处理赞和收藏点击
+const handleLikeAndFavour = () => {
+  uni.vibrateShort()
+  // TODO: 跳转到赞和收藏页面
+  uni.showToast({
+    title: '赞和收藏功能开发中',
+    icon: 'none'
+  })
+}
+
+// 处理评论和@点击
+const handleCommentAndMention = () => {
+  uni.vibrateShort()
+  // TODO: 跳转到评论和@页面
+  uni.showToast({
+    title: '评论和@功能开发中',
+    icon: 'none'
+  })
 }
 
 // 点击聊天项
@@ -208,6 +290,7 @@ const handleChatClick = (chat: any) => {
 onMounted(() => {
   getSystemInfo()
   loadChatList()
+  loadSystemUnreadCount()
 })
 
 // 页面显示时的处理
@@ -230,6 +313,7 @@ onShow(() => {
 
   if (chatList.value.length > 0 || !loading.value) {
     loadChatList()
+    loadSystemUnreadCount()
   }
 })
 
@@ -238,7 +322,7 @@ onShareAppMessage(() => {
   console.log('消息页面分享给朋友事件触发了')
   return {
     title: 'CampCircle - 校园消息互动平台',
-    path: '/pages/tabbar/info/info',
+    path: '/pages/tabbar/message/message',
     imageUrl: 'https://yun-picture-1253809168.cos.ap-guangzhou.myqcloud.com/campcircle/post/1928998042208366594/2025-06-13_12f2e457-9cae-4ffa-a149-1f480ddc221d.png'
   }
 })
@@ -269,8 +353,6 @@ onShareTimeline(() => {
   right: 0;
   z-index: 100;
   background: #ffffff;
-  border-bottom: 1rpx solid #f0f0f0;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
 }
 
 .header-content {
@@ -321,106 +403,148 @@ onShareTimeline(() => {
 // 主内容区域
 .main-content {
   height: 100vh;
-  padding: 0 20rpx;
+  width: 100%;
 }
 
-.chat-scroll {
-  height: 100%;
-  padding-bottom: 160rpx;
-}
-
-.chat-list {
-  padding: 20rpx 0;
-}
-
-.chat-card {
-  margin-bottom: 20rpx;
+// 系统消息功能区
+.system-message-section {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 40rpx 20rpx;
   background: white;
-  border-radius: 24rpx;
-  overflow: hidden;
-  box-shadow: 0 2rpx 20rpx rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(148, 163, 184, 0.08);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+}
+
+.system-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  padding: 20rpx;
+  border-radius: 12rpx;
+  transition: all 0.3s ease;
 
   &:active {
-    transform: translateY(2rpx);
-    box-shadow: 0 1rpx 10rpx rgba(0, 0, 0, 0.08);
+    background: #f8f9fa;
+    transform: scale(0.95);
   }
 }
 
-.card-inner {
+.system-icon {
+  width: 80rpx;
+  height: 80rpx;
+  margin-bottom: 16rpx;
   display: flex;
   align-items: center;
-  padding: 28rpx 24rpx;
-  position: relative;
+  justify-content: center;
 }
 
-.avatar-section {
-  position: relative;
-  margin-right: 24rpx;
-}
-
-.avatar-wrapper {
-  position: relative;
-  width: 84rpx;
-  height: 84rpx;
-}
-
-.avatar-image {
+.icon-image {
   width: 100%;
   height: 100%;
-  border-radius: 20rpx;
-  object-fit: cover;
+  object-fit: contain;
 }
 
-.online-indicator {
-  position: absolute;
-  bottom: 2rpx;
-  right: 2rpx;
-  width: 18rpx;
-  height: 18rpx;
-  background: #22c55e;
-  border-radius: 50%;
-  border: 2rpx solid white;
+.system-text {
+  font-size: 24rpx;
+  color: #666666;
+  font-weight: 500;
 }
 
-.unread-dot {
+.system-badge {
   position: absolute;
-  top: -8rpx;
-  right: -8rpx;
+  top: 8rpx;
+  right: 8rpx;
   min-width: 32rpx;
   height: 32rpx;
-  background: #ef4444;
+  background: #ff4757;
   border-radius: 16rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0 6rpx;
-  border: 2rpx solid white;
+}
+
+.badge-text {
+  color: white;
+  font-size: 18rpx;
+  font-weight: 700;
+}
+
+.chat-scroll {
+  height: 100%;
+  width: 100%;
+  padding-bottom: 160rpx;
+}
+
+.chat-list {
+  background: white;
+  width: 100%;
+}
+
+.chat-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 20rpx;
+  transition: background-color 0.2s ease;
+
+  &:active {
+    background-color: #f8f9fa;
+  }
+}
+
+.avatar-section {
+  position: relative;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+
+.avatar-image {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.unread-dot {
+  position: absolute;
+  top: -6rpx;
+  right: -6rpx;
+  min-width: 28rpx;
+  height: 28rpx;
+  background: #ff4757;
+  border-radius: 14rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4rpx;
 }
 
 .dot-text {
   color: white;
-  font-size: 18rpx;
+  font-size: 16rpx;
   font-weight: 700;
 }
 
 .content-section {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .user-info {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8rpx;
+  margin-bottom: 6rpx;
 }
 
 .user-name {
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 600;
-  color: #1e293b;
+  color: #333333;
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -428,10 +552,11 @@ onShareTimeline(() => {
 }
 
 .chat-time {
-  font-size: 22rpx;
-  color: #94a3b8;
-  font-weight: 500;
+  font-size: 20rpx;
+  color: #999999;
+  font-weight: 400;
   margin-left: 16rpx;
+  flex-shrink: 0;
 }
 
 .message-info {
@@ -441,8 +566,8 @@ onShareTimeline(() => {
 }
 
 .message-preview {
-  font-size: 26rpx;
-  color: #64748b;
+  font-size: 24rpx;
+  color: #666666;
   line-height: 1.4;
   flex: 1;
   overflow: hidden;
@@ -450,17 +575,18 @@ onShareTimeline(() => {
   white-space: nowrap;
 
   &.recalled-message {
-    color: #94a3b8;
+    color: #999999;
     font-style: italic;
   }
 }
 
 .message-type-icon {
-  margin-left: 16rpx;
+  margin-left: 12rpx;
+  flex-shrink: 0;
 }
 
 .type-emoji {
-  font-size: 24rpx;
+  font-size: 20rpx;
 }
 
 // 空状态

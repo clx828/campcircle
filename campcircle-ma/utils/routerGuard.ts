@@ -13,15 +13,15 @@ const whiteList = [
 // 需要登录才能访问的页面
 const authPages = [
     'pages/favorites/favorites',
-    'pages/tabbar/info/info' // 消息页面
-  	]  
+    'pages/tabbar/message/message' // 消息页面
+  	]
 
 // tabBar页面列表
 const tabBarPages = [
     'pages/tabbar/home/home',
     'pages/tabbar/follow/follow',
     'pages/tabbar/tabbar-3/tabbar-3',
-    'pages/tabbar/info/info',
+    'pages/tabbar/message/message',
     'pages/tabbar/mine/mine'
 ]
 

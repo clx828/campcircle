@@ -10,13 +10,12 @@ import java.util.Date;
 import lombok.Data;
 
 /**
- * 用户
+ * 系统消息
  *
- 
  */
-@TableName(value = "user")
+@TableName(value = "system_message")
 @Data
-public class User implements Serializable {
+public class SystemMessage implements Serializable {
 
     /**
      * id
@@ -25,66 +24,49 @@ public class User implements Serializable {
     private Long id;
 
     /**
-     * 用户账号
+     * 发送用户 id（系统消息时为0，表示系统发送）
      */
-    private String userAccount;
+    private Long fromUserId;
 
     /**
-     * 用户密码
+     * 接收用户 id
      */
-    private String userPassword;
+    private Long toUserId;
 
     /**
-     * 开放平台id
+     * 消息标题
      */
-    private String unionId;
+    private String title;
 
     /**
-     * 公众号openId
+     * 消息内容
      */
-    private String maOpenId;
+    private String content;
 
     /**
-     * 用户昵称
+     * 消息类型：0-系统通知，1-点赞通知，2-收藏通知，3-评论通知，4-关注通知
      */
-    private String userName;
+    private Integer type;
 
     /**
-     * 用户头像
+     * 关联的帖子ID（如果是帖子相关的通知）
      */
-    private String userAvatar;
+    private Long postId;
 
     /**
-     * 用户简介
+     * 关联的评论ID（如果是评论相关的通知）
      */
-    private String userProfile;
-    /**
-     * 性别
-     */
-    private Integer gender;
+    private Long commentId;
 
     /**
-     * 学校
+     * 状态：0-未读，1-已读
      */
-    private String school;
+    private Integer status;
 
     /**
-     * 用户背景URL
+     * 是否为全局消息：0-否，1-是（发送给所有用户）
      */
-    private String backgroundUrl;
-
-    /**
-     * 关注数
-     */
-    private Integer followNum;
-    /**
-     * 粉丝数
-     */
-    private Integer fansNum;
-    /**
-     * 用户角色：user/admin/ban
-     */
-    private String userRole;
+    private Integer isGlobal;
 
     /**
      * 创建时间
@@ -101,11 +83,6 @@ public class User implements Serializable {
      */
     @TableLogic
     private Integer isDelete;
-
-    /**
-     * 获赞总数
-     */
-    private Integer receivedThumbNum;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

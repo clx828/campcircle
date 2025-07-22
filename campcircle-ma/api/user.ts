@@ -21,6 +21,7 @@ export interface UpdateMyUserParams {
     userAvatar?: string;
     userName?: string;
     userProfile?: string;
+    backgroundUrl?: string;
 }
 
 // 用户查询请求参数

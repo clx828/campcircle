@@ -6,16 +6,15 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caden.campcircle.common.ErrorCode;
 import com.caden.campcircle.common.PageRequest;
 import com.caden.campcircle.exception.BusinessException;
+import com.caden.campcircle.exception.ThrowUtils;
 import com.caden.campcircle.mapper.FollowMapper;
 import com.caden.campcircle.model.entity.*;
 import com.caden.campcircle.model.vo.FansVO;
 import com.caden.campcircle.model.vo.UserStatisticsVO;
 import com.caden.campcircle.model.vo.FollowVO;
 import com.caden.campcircle.model.vo.PostVO;
-import com.caden.campcircle.service.FollowService;
-import com.caden.campcircle.service.PostService;
-import com.caden.campcircle.service.PostThumbService;
-import com.caden.campcircle.service.UserService;
+import com.caden.campcircle.service.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,10 +29,14 @@ import java.util.stream.Collectors;
  *
  */
 @Service
+@Slf4j
 public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> implements FollowService {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private SystemMessageService systemMessageService;
     @Resource
     private PostThumbService postThumbService;
     @Resource
@@ -65,10 +68,12 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
                 // 更新计数：关注数-1，粉丝数-1
                 userService.update()
                         .eq("id", userId)
+                        .gt("followNum", 0)
                         .setSql("followNum = followNum - 1")
                         .update();
                 userService.update()
                         .eq("id", followUserId)
+                        .gt("fansNum", 0)
                         .setSql("fansNum = fansNum - 1")
                         .update();
             }
@@ -90,6 +95,14 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
                         .eq("id", followUserId)
                         .setSql("fansNum = fansNum + 1")
                         .update();
+
+                // 发送关注通知
+                try {
+                    systemMessageService.sendFollowNotification(userId, followUserId);
+                    log.info("发送关注通知成功: {}", userId);
+                } catch (Exception e) {
+                    log.error("发送关注通知失败", e);
+                }
             }
             return saveResult;
         }

@@ -11,7 +11,7 @@
             <!-- Logo区域 -->
             <view class="logo-area">
                 <image class="logo"
-                    src="../../static/img/tabbar/home.png"
+                    src="/static/img/logo.png"
                     mode="aspectFit" />
                 <text class="slogan">探索精彩，分享生活</text>
             </view>

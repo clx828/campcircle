@@ -47,7 +47,7 @@
 			}
 		},
 		{
-			"path": "pages/tabbar/info/info",
+			"path": "pages/tabbar/message/message",
 			"style": {
 				"navigationBarTitleText": "消息"
 			}
@@ -110,6 +110,14 @@
 				"navigationBarTitleText": "用户主页",
 				"navigationStyle": "custom",
 				"navigationBarTextStyle": "white"
+			}
+		},
+		{
+			"path": "pages/qrPoster/qrPoster",
+			"style": {
+				"navigationBarTitleText": "二维码海报",
+				"navigationStyle": "custom",
+				"navigationBarTextStyle": "black"
 			}
 		}
 	],

@@ -22,6 +22,8 @@ create table if not exists user
     gender      tinyint                            null comment '性别：0-未知，1-男，2-女',
 -- 增加学校字段
     school      varchar(256)                       null comment '学校',
+-- 增加用户背景URL字段
+    backgroundUrl varchar(1024)                    null comment '用户背景URL',
 -- 增加粉丝数和关注数字段
     followNum   int      default 0                 not null comment '关注数',
     fansNum     int      default 0                 not null comment '粉丝数',
@@ -35,6 +37,7 @@ create table if not exists user
 -- 在用户表中添加获赞数字段
 ALTER TABLE user ADD COLUMN receivedThumbNum INT DEFAULT 0 NOT NULL COMMENT '获赞总数';
 
+ALTER TABLE user ADD COLUMN backgroundUrl varchar(1024) NULL COMMENT '用户背景URL' AFTER school;
 -- 帖子表
 create table if not exists post
 (
@@ -216,6 +219,30 @@ ALTER TABLE private_message ADD INDEX idx_to_from (toUserId, fromUserId);
 -- 添加热度分数字段
 ALTER TABLE post ADD COLUMN hotScore DECIMAL(10,4) DEFAULT 0.0000 NOT NULL COMMENT '热度分数';
 ALTER TABLE post ADD COLUMN lastHotUpdateTime DATETIME NULL COMMENT '最后热度更新时间';
+
+-- 系统消息表
+CREATE TABLE IF NOT EXISTS system_message (
+    id          BIGINT AUTO_INCREMENT COMMENT 'id' PRIMARY KEY,
+    fromUserId  BIGINT       DEFAULT 0                 NOT NULL COMMENT '发送用户 id（系统消息时为0）',
+    toUserId    BIGINT                                 NULL COMMENT '接收用户 id（全局消息时为空）',
+    title       VARCHAR(80)                            NOT NULL COMMENT '消息标题',
+    content     TEXT                                   NOT NULL COMMENT '消息内容',
+    type        TINYINT                                NOT NULL COMMENT '消息类型：0-系统通知，1-点赞通知，2-收藏通知，3-评论通知，4-关注通知',
+    postId      BIGINT                                 NULL COMMENT '关联的帖子ID',
+    commentId   BIGINT                                 NULL COMMENT '关联的评论ID',
+    status      TINYINT      DEFAULT 0                 NOT NULL COMMENT '状态：0-未读，1-已读',
+    isGlobal    TINYINT      DEFAULT 0                 NOT NULL COMMENT '是否为全局消息：0-否，1-是',
+    createTime  DATETIME     DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT '创建时间',
+    updateTime  DATETIME     DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    isDelete    TINYINT      DEFAULT 0                 NOT NULL COMMENT '是否删除',
+    INDEX idx_fromUserId (fromUserId),
+    INDEX idx_toUserId (toUserId),
+    INDEX idx_type (type),
+    INDEX idx_status (status),
+    INDEX idx_createTime (createTime),
+    INDEX idx_postId (postId),
+    INDEX idx_commentId (commentId)
+) COMMENT '系统消息' COLLATE = utf8mb4_unicode_ci;
 
 -- 为热度分数添加索引，用于热门排序
 ALTER TABLE post ADD INDEX idx_hot_score (hotScore DESC, createTime DESC);

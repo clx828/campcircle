@@ -16,6 +16,7 @@ import com.caden.campcircle.model.vo.PostCommentVO;
 import com.caden.campcircle.model.vo.UserVO;
 import com.caden.campcircle.service.PostCommentService;
 import com.caden.campcircle.service.PostService;
+import com.caden.campcircle.service.SystemMessageService;
 import com.caden.campcircle.service.UserService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,9 @@ public class PostCommentServiceImpl extends ServiceImpl<PostCommentMapper, PostC
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private SystemMessageService systemMessageService;
 
     @Resource
     private PostService postService;
@@ -86,6 +90,22 @@ public class PostCommentServiceImpl extends ServiceImpl<PostCommentMapper, PostC
                 .eq("id", postComment.getPostId())
                 .setSql("commentNum = commentNum + 1")
                 .update();
+
+        // 6. 发送评论通知
+        try {
+            // 如果是回复评论，通知被回复的用户；否则通知帖子作者
+            Long notifyUserId = postComment.getReplyUserId() != null ?
+                postComment.getReplyUserId() : post.getUserId();
+            systemMessageService.sendCommentNotification(
+                loginUser.getId(),
+                notifyUserId,
+                postComment.getPostId(),
+                postComment.getId()
+            );
+        } catch (Exception e) {
+            log.error("发送评论通知失败", e);
+        }
+
         return postComment.getId();
     }
 

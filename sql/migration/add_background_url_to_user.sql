@@ -1,0 +1,10 @@
+-- 为用户表添加背景URL字段的迁移脚本
+-- 执行时间：2025-07-22
+
+-- 添加用户背景URL字段
+ALTER TABLE user ADD COLUMN backgroundUrl varchar(1024) NULL COMMENT '用户背景URL' AFTER school;
+
+-- 验证字段是否添加成功
+-- SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_COMMENT 
+-- FROM INFORMATION_SCHEMA.COLUMNS 
+-- WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'user' AND COLUMN_NAME = 'backgroundUrl';
