@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.caden.campcircle.common.ErrorCode;
+import com.caden.campcircle.constant.MessageConstant;
 import com.caden.campcircle.exception.ThrowUtils;
 import com.caden.campcircle.mapper.SystemMessageMapper;
 import com.caden.campcircle.model.dto.systemmessage.SystemMessageQueryRequest;
@@ -91,6 +92,7 @@ public class SystemMessageServiceImpl extends ServiceImpl<SystemMessageMapper, S
         Long toUserId = systemMessageQueryRequest.getToUserId();
         String title = systemMessageQueryRequest.getTitle();
         Integer type = systemMessageQueryRequest.getType();
+        List<Integer> types = systemMessageQueryRequest.getTypes();
         Long postId = systemMessageQueryRequest.getPostId();
         Long commentId = systemMessageQueryRequest.getCommentId();
         Integer status = systemMessageQueryRequest.getStatus();
@@ -102,7 +104,14 @@ public class SystemMessageServiceImpl extends ServiceImpl<SystemMessageMapper, S
         queryWrapper.eq(fromUserId != null, "fromUserId", fromUserId);
         queryWrapper.eq(toUserId != null, "toUserId", toUserId);
         queryWrapper.like(StringUtils.isNotBlank(title), "title", title);
-        queryWrapper.eq(type != null, "type", type);
+
+        // 支持单个类型查询和多个类型查询
+        if (types != null && !types.isEmpty()) {
+            queryWrapper.in("type", types);
+        } else if (type != null) {
+            queryWrapper.eq("type", type);
+        }
+
         queryWrapper.eq(postId != null, "postId", postId);
         queryWrapper.eq(commentId != null, "commentId", commentId);
         queryWrapper.eq(status != null, "status", status);
@@ -228,20 +237,20 @@ public class SystemMessageServiceImpl extends ServiceImpl<SystemMessageMapper, S
     @Override
     public boolean sendSystemNotification(String title, String content, Long toUserId) {
         SystemMessage systemMessage = new SystemMessage();
-        systemMessage.setFromUserId(0L); // 系统发送
+        systemMessage.setFromUserId(MessageConstant.SYSTEM_MESSAGE_FROM_SYSTEM); // 系统发送
         systemMessage.setTitle(title);
         systemMessage.setContent(content);
-        systemMessage.setType(0); // 系统通知
-        systemMessage.setStatus(0); // 未读
-        
+        systemMessage.setType(MessageConstant.SYSTEM_MESSAGE_TYPE_SYSTEM); // 系统通知
+        systemMessage.setStatus(MessageConstant.SYSTEM_MESSAGE_STATUS_UNREAD); // 未读
+
         if (toUserId == null) {
             // 全局消息，发送给所有用户
-            systemMessage.setIsGlobal(1);
+            systemMessage.setIsGlobal(MessageConstant.SYSTEM_MESSAGE_GLOBAL);
             systemMessage.setToUserId(null);
             return this.save(systemMessage);
         } else {
             // 发送给指定用户
-            systemMessage.setIsGlobal(0);
+            systemMessage.setIsGlobal(MessageConstant.SYSTEM_MESSAGE_NOT_GLOBAL);
             systemMessage.setToUserId(toUserId);
             return this.save(systemMessage);
         }
@@ -253,17 +262,17 @@ public class SystemMessageServiceImpl extends ServiceImpl<SystemMessageMapper, S
         if (fromUserId.equals(toUserId)) {
             return true;
         }
-        
+
         SystemMessage systemMessage = new SystemMessage();
         systemMessage.setFromUserId(fromUserId);
         systemMessage.setToUserId(toUserId);
-        systemMessage.setTitle("点赞通知");
-        systemMessage.setContent("有人点赞了您的帖子");
-        systemMessage.setType(1); // 点赞通知
+        systemMessage.setTitle(MessageConstant.THUMB_NOTIFICATION_TITLE);
+        systemMessage.setContent(MessageConstant.THUMB_NOTIFICATION_CONTENT);
+        systemMessage.setType(MessageConstant.SYSTEM_MESSAGE_TYPE_THUMB); // 点赞通知
         systemMessage.setPostId(postId);
-        systemMessage.setStatus(0); // 未读
-        systemMessage.setIsGlobal(0);
-        
+        systemMessage.setStatus(MessageConstant.SYSTEM_MESSAGE_STATUS_UNREAD); // 未读
+        systemMessage.setIsGlobal(MessageConstant.SYSTEM_MESSAGE_NOT_GLOBAL);
+
         return this.save(systemMessage);
     }
 
@@ -273,17 +282,17 @@ public class SystemMessageServiceImpl extends ServiceImpl<SystemMessageMapper, S
         if (fromUserId.equals(toUserId)) {
             return true;
         }
-        
+
         SystemMessage systemMessage = new SystemMessage();
         systemMessage.setFromUserId(fromUserId);
         systemMessage.setToUserId(toUserId);
-        systemMessage.setTitle("收藏通知");
-        systemMessage.setContent("有人收藏了您的帖子");
-        systemMessage.setType(2); // 收藏通知
+        systemMessage.setTitle(MessageConstant.FAVOUR_NOTIFICATION_TITLE);
+        systemMessage.setContent(MessageConstant.FAVOUR_NOTIFICATION_CONTENT);
+        systemMessage.setType(MessageConstant.SYSTEM_MESSAGE_TYPE_FAVOUR); // 收藏通知
         systemMessage.setPostId(postId);
-        systemMessage.setStatus(0); // 未读
-        systemMessage.setIsGlobal(0);
-        
+        systemMessage.setStatus(MessageConstant.SYSTEM_MESSAGE_STATUS_UNREAD); // 未读
+        systemMessage.setIsGlobal(MessageConstant.SYSTEM_MESSAGE_NOT_GLOBAL);
+
         return this.save(systemMessage);
     }
 
@@ -293,18 +302,18 @@ public class SystemMessageServiceImpl extends ServiceImpl<SystemMessageMapper, S
         if (fromUserId.equals(toUserId)) {
             return true;
         }
-        
+
         SystemMessage systemMessage = new SystemMessage();
         systemMessage.setFromUserId(fromUserId);
         systemMessage.setToUserId(toUserId);
-        systemMessage.setTitle("评论通知");
-        systemMessage.setContent("有人评论了您的帖子");
-        systemMessage.setType(3); // 评论通知
+        systemMessage.setTitle(MessageConstant.COMMENT_NOTIFICATION_TITLE);
+        systemMessage.setContent(MessageConstant.COMMENT_NOTIFICATION_CONTENT);
+        systemMessage.setType(MessageConstant.SYSTEM_MESSAGE_TYPE_COMMENT); // 评论通知
         systemMessage.setPostId(postId);
         systemMessage.setCommentId(commentId);
-        systemMessage.setStatus(0); // 未读
-        systemMessage.setIsGlobal(0);
-        
+        systemMessage.setStatus(MessageConstant.SYSTEM_MESSAGE_STATUS_UNREAD); // 未读
+        systemMessage.setIsGlobal(MessageConstant.SYSTEM_MESSAGE_NOT_GLOBAL);
+
         return this.save(systemMessage);
     }
 
@@ -314,16 +323,16 @@ public class SystemMessageServiceImpl extends ServiceImpl<SystemMessageMapper, S
         if (fromUserId.equals(toUserId)) {
             return true;
         }
-        
+
         SystemMessage systemMessage = new SystemMessage();
         systemMessage.setFromUserId(fromUserId);
         systemMessage.setToUserId(toUserId);
-        systemMessage.setTitle("关注通知");
-        systemMessage.setContent("有人关注了您");
-        systemMessage.setType(4); // 关注通知
-        systemMessage.setStatus(0); // 未读
-        systemMessage.setIsGlobal(0);
-        
+        systemMessage.setTitle(MessageConstant.FOLLOW_NOTIFICATION_TITLE);
+        systemMessage.setContent(MessageConstant.FOLLOW_NOTIFICATION_CONTENT);
+        systemMessage.setType(MessageConstant.SYSTEM_MESSAGE_TYPE_FOLLOW); // 关注通知
+        systemMessage.setStatus(MessageConstant.SYSTEM_MESSAGE_STATUS_UNREAD); // 未读
+        systemMessage.setIsGlobal(MessageConstant.SYSTEM_MESSAGE_NOT_GLOBAL);
+
         return this.save(systemMessage);
     }
 
@@ -332,8 +341,8 @@ public class SystemMessageServiceImpl extends ServiceImpl<SystemMessageMapper, S
         UpdateWrapper<SystemMessage> updateWrapper = new UpdateWrapper<>();
         updateWrapper.eq("id", messageId);
         updateWrapper.eq("toUserId", userId);
-        updateWrapper.set("status", 1);
-        
+        updateWrapper.set("status", MessageConstant.SYSTEM_MESSAGE_STATUS_READ); // 已读
+
         return this.update(updateWrapper);
     }
 
@@ -341,12 +350,12 @@ public class SystemMessageServiceImpl extends ServiceImpl<SystemMessageMapper, S
     public int markAllAsRead(Long userId, Integer type) {
         UpdateWrapper<SystemMessage> updateWrapper = new UpdateWrapper<>();
         updateWrapper.eq("toUserId", userId);
-        updateWrapper.eq("status", 0); // 只更新未读的
+        updateWrapper.eq("status", MessageConstant.SYSTEM_MESSAGE_STATUS_UNREAD); // 只更新未读的
         if (type != null) {
             updateWrapper.eq("type", type);
         }
-        updateWrapper.set("status", 1);
-        
+        updateWrapper.set("status", MessageConstant.SYSTEM_MESSAGE_STATUS_READ); // 已读
+
         return this.getBaseMapper().update(null, updateWrapper);
     }
 
@@ -354,13 +363,43 @@ public class SystemMessageServiceImpl extends ServiceImpl<SystemMessageMapper, S
     public long getUnreadCount(Long userId, Integer type) {
         QueryWrapper<SystemMessage> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("toUserId", userId);
-        queryWrapper.eq("status", 0); // 未读
+        queryWrapper.eq("status", MessageConstant.MESSAGE_UNREAD); // 未读
         if (type != null) {
             queryWrapper.eq("type", type);
         }
         queryWrapper.eq("isDelete", false);
-        
+
         return this.count(queryWrapper);
+    }
+
+    @Override
+    public long getUnreadCountByTypes(Long userId, List<Integer> types) {
+        if (types == null || types.isEmpty()) {
+            return 0;
+        }
+
+        QueryWrapper<SystemMessage> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("toUserId", userId);
+        queryWrapper.eq("status", MessageConstant.NOTIFICATION_UNREAD); // 未读
+        queryWrapper.in("type", types);
+        queryWrapper.eq("isDelete", false);
+
+        return this.count(queryWrapper);
+    }
+
+    @Override
+    public int markAllAsReadByTypes(Long userId, List<Integer> types) {
+        if (types == null || types.isEmpty()) {
+            return 0;
+        }
+
+        UpdateWrapper<SystemMessage> updateWrapper = new UpdateWrapper<>();
+        updateWrapper.eq("toUserId", userId);
+        updateWrapper.eq("status", MessageConstant.NOTIFICATION_UNREAD); // 只更新未读的
+        updateWrapper.in("type", types);
+        updateWrapper.set("status", MessageConstant.MESSAGE_READ); // 已读
+
+        return this.getBaseMapper().update(null, updateWrapper);
     }
 
     /**

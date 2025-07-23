@@ -2,6 +2,7 @@ package com.caden.campcircle.model.dto.systemmessage;
 
 import com.caden.campcircle.common.PageRequest;
 import java.io.Serializable;
+import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -39,6 +40,11 @@ public class SystemMessageQueryRequest extends PageRequest implements Serializab
     private Integer type;
 
     /**
+     * 消息类型列表：支持查询多个类型的消息
+     */
+    private List<Integer> types;
+
+    /**
      * 关联的帖子ID
      */
     private Long postId;
@@ -49,7 +55,7 @@ public class SystemMessageQueryRequest extends PageRequest implements Serializab
     private Long commentId;
 
     /**
-     * 状态：0-未读，1-已读
+     * 状态：1-未读，0-已读
      */
     private Integer status;
 

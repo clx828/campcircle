@@ -204,7 +204,7 @@ const handleLike = async () => {
         props.cardInfo.hasThumb = originalHasThumb
         props.cardInfo.thumbNum = originalThumbNum
         uni.showToast({
-            title: '操作失败',
+            title: error.message || '操作失败',
             icon: 'error'
         })
     }
@@ -250,7 +250,7 @@ const handleCollect = async () => {
         props.cardInfo.hasFavour = originalHasFavour
         props.cardInfo.favourNum = originalFavourNum
         uni.showToast({
-            title: '操作失败',
+            title:  error.message || '操作失败',
             icon: 'error'
         })
     }
@@ -278,7 +278,7 @@ const handleFollow = async () => {
         // 请求失败时回滚本地状态
         props.cardInfo.hasFollow = originalHasFollow
         uni.showToast({
-            title: '操作失败',
+            title:  error.message || '操作失败',
             icon: 'error'
         })
     }

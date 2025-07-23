@@ -40,8 +40,8 @@
               <image src="/static/img/like.png" class="icon-image" />
             </view>
             <text class="system-text">赞和收藏</text>
-            <view v-if="(systemUnreadCount.thumb + systemUnreadCount.favour) > 0" class="system-badge">
-              <text class="badge-text">{{ (systemUnreadCount.thumb + systemUnreadCount.favour) > 99 ? '99+' : (systemUnreadCount.thumb + systemUnreadCount.favour) }}</text>
+            <view v-if="systemUnreadCount.likeFavour > 0" class="system-badge">
+              <text class="badge-text">{{ systemUnreadCount.likeFavour > 99 ? '99+' : systemUnreadCount.likeFavour }}</text>
             </view>
           </view>
 
@@ -50,8 +50,8 @@
               <image src="/static/img/message.png" class="icon-image" />
             </view>
             <text class="system-text">评论和@</text>
-            <view v-if="systemUnreadCount.comment > 0" class="system-badge">
-              <text class="badge-text">{{ systemUnreadCount.comment > 99 ? '99+' : systemUnreadCount.comment }}</text>
+            <view v-if="systemUnreadCount.commentFollow > 0" class="system-badge">
+              <text class="badge-text">{{ systemUnreadCount.commentFollow > 99 ? '99+' : systemUnreadCount.commentFollow }}</text>
             </view>
           </view>
         </view>
@@ -136,10 +136,8 @@ const refresherTriggered = ref(false)
 const systemUnreadCount = ref({
   total: 0,
   system: 0,
-  thumb: 0,
-  favour: 0,
-  comment: 0,
-  follow: 0
+  likeFavour: 0,
+  commentFollow: 0
 })
 
 // 获取系统信息
@@ -206,7 +204,12 @@ const loadSystemUnreadCount = async () => {
   try {
     const res = await systemMessageApi.getUnreadCount()
     if (res.code === 0) {
-      systemUnreadCount.value = res.data
+      systemUnreadCount.value = {
+        total: parseInt(res.data.total) || 0,
+        system: parseInt(res.data.system) || 0,
+        likeFavour: parseInt(res.data.likeFavour) || 0,
+        commentFollow: parseInt(res.data.commentFollow) || 0
+      }
     }
   } catch (error) {
     console.error('获取系统消息未读数量失败:', error)
@@ -248,30 +251,24 @@ const onRefresh = () => {
 // 处理系统通知点击
 const handleSystemNotification = () => {
   uni.vibrateShort()
-  // TODO: 跳转到系统通知页面
-  uni.showToast({
-    title: '系统通知功能开发中',
-    icon: 'none'
+  uni.navigateTo({
+    url: '/pages/systemMessage/systemMessage'
   })
 }
 
 // 处理赞和收藏点击
 const handleLikeAndFavour = () => {
   uni.vibrateShort()
-  // TODO: 跳转到赞和收藏页面
-  uni.showToast({
-    title: '赞和收藏功能开发中',
-    icon: 'none'
+  uni.navigateTo({
+    url: '/pages/interactionMessage/interactionMessage?type=likeFavour'
   })
 }
 
 // 处理评论和@点击
 const handleCommentAndMention = () => {
   uni.vibrateShort()
-  // TODO: 跳转到评论和@页面
-  uni.showToast({
-    title: '评论和@功能开发中',
-    icon: 'none'
+  uni.navigateTo({
+    url: '/pages/interactionMessage/interactionMessage?type=commentFollow'
   })
 }
 

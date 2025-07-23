@@ -1,10 +1,13 @@
 package com.caden.campcircle.service;
 
+import com.caden.campcircle.constant.MessageConstant;
 import com.caden.campcircle.model.entity.SystemMessage;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -72,7 +75,7 @@ class SystemMessageServiceTest {
         message.setTitle("测试消息");
         message.setContent("测试内容");
         message.setType(0);
-        message.setStatus(0);
+        message.setStatus(MessageConstant.MESSAGE_UNREAD); // 未读
         message.setIsGlobal(0);
         
         boolean saveResult = systemMessageService.save(message);
@@ -106,5 +109,46 @@ class SystemMessageServiceTest {
         assertTrue(systemMessageService.sendFavourNotification(1L, 2L, 1L));
         assertTrue(systemMessageService.sendCommentNotification(1L, 2L, 1L, 1L));
         assertTrue(systemMessageService.sendFollowNotification(1L, 2L));
+    }
+
+    @Test
+    void testGetUnreadCountByTypes() {
+        // 测试按类型列表获取未读数量
+        List<Integer> likeFavourTypes = Arrays.asList(MessageConstant.SYSTEM_MESSAGE_TYPE_THUMB, MessageConstant.SYSTEM_MESSAGE_TYPE_FAVOUR);
+        long count = systemMessageService.getUnreadCountByTypes(1L, likeFavourTypes);
+        assertTrue(count >= 0);
+    }
+
+    @Test
+    void testMarkAllAsReadByTypes() {
+        // 测试按类型列表批量标记已读
+        List<Integer> likeFavourTypes = Arrays.asList(MessageConstant.SYSTEM_MESSAGE_TYPE_THUMB, MessageConstant.SYSTEM_MESSAGE_TYPE_FAVOUR);
+        int count = systemMessageService.markAllAsReadByTypes(1L, likeFavourTypes);
+        assertTrue(count >= 0);
+    }
+
+    @Test
+    void testNewUnreadCountStructure() {
+        // 测试新的未读消息统计结构
+        Long userId = 1L;
+
+        // 测试总未读数
+        long total = systemMessageService.getUnreadCount(userId, null);
+        assertTrue(total >= 0);
+
+        // 测试系统通知未读数
+        long system = systemMessageService.getUnreadCount(userId, MessageConstant.SYSTEM_MESSAGE_TYPE_SYSTEM);
+        assertTrue(system >= 0);
+
+        // 测试点赞和收藏未读数
+        long likeFavour = systemMessageService.getUnreadCountByTypes(userId, Arrays.asList(MessageConstant.SYSTEM_MESSAGE_TYPE_THUMB, MessageConstant.SYSTEM_MESSAGE_TYPE_FAVOUR));
+        assertTrue(likeFavour >= 0);
+
+        // 测试评论和关注未读数
+        long commentFollow = systemMessageService.getUnreadCountByTypes(userId, Arrays.asList(MessageConstant.SYSTEM_MESSAGE_TYPE_COMMENT, MessageConstant.SYSTEM_MESSAGE_TYPE_FOLLOW));
+        assertTrue(commentFollow >= 0);
+
+        // 验证总数应该等于各部分之和
+        assertEquals(total, system + likeFavour + commentFollow);
     }
 }

@@ -119,6 +119,24 @@
 				"navigationStyle": "custom",
 				"navigationBarTextStyle": "black"
 			}
+		},
+		{
+			"path": "pages/systemMessage/systemMessage",
+			"style": {
+				"navigationBarTitleText": "系统通知",
+				"navigationStyle": "custom",
+				"navigationBarTextStyle": "black",
+				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/interactionMessage/interactionMessage",
+			"style": {
+				"navigationBarTitleText": "消息",
+				"navigationStyle": "custom",
+				"navigationBarTextStyle": "black",
+				"enablePullDownRefresh": true
+			}
 		}
 	],
 

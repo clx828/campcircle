@@ -6,6 +6,7 @@ import com.caden.campcircle.common.BaseResponse;
 import com.caden.campcircle.common.DeleteRequest;
 import com.caden.campcircle.common.ErrorCode;
 import com.caden.campcircle.common.ResultUtils;
+import com.caden.campcircle.constant.MessageConstant;
 import com.caden.campcircle.constant.UserConstant;
 import com.caden.campcircle.exception.BusinessException;
 import com.caden.campcircle.exception.ThrowUtils;
@@ -26,7 +27,9 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -62,8 +65,8 @@ public class SystemMessageController {
         
         SystemMessage systemMessage = new SystemMessage();
         BeanUtils.copyProperties(systemMessageAddRequest, systemMessage);
-        systemMessage.setFromUserId(0L); // 系统发送
-        systemMessage.setStatus(0); // 未读
+        systemMessage.setFromUserId(MessageConstant.SYSTEM_MESSAGE_FROM_SYSTEM); // 系统发送
+        systemMessage.setStatus(MessageConstant.MESSAGE_UNREAD); // 未读
         
         // 数据校验
         systemMessageService.validSystemMessage(systemMessage, true);
@@ -243,16 +246,34 @@ public class SystemMessageController {
     public BaseResponse<Map<String, Long>> getUnreadCount(HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
         Long userId = loginUser.getId();
-        
+
         Map<String, Long> unreadCount = new HashMap<>();
-        unreadCount.put("total", systemMessageService.getUnreadCount(userId, null));
-        unreadCount.put("system", systemMessageService.getUnreadCount(userId, 0));
-        unreadCount.put("thumb", systemMessageService.getUnreadCount(userId, 1));
-        unreadCount.put("favour", systemMessageService.getUnreadCount(userId, 2));
-        unreadCount.put("comment", systemMessageService.getUnreadCount(userId, 3));
-        unreadCount.put("follow", systemMessageService.getUnreadCount(userId, 4));
-        
+        unreadCount.put("total", systemMessageService.getUnreadCount(userId, null)); // 总未读数
+        unreadCount.put("system", systemMessageService.getUnreadCount(userId, MessageConstant.SYSTEM_MESSAGE_TYPE_SYSTEM)); // 系统通知
+        unreadCount.put("likeFavour", systemMessageService.getUnreadCountByTypes(userId, Arrays.asList(MessageConstant.SYSTEM_MESSAGE_TYPE_THUMB, MessageConstant.SYSTEM_MESSAGE_TYPE_FAVOUR))); // 点赞和收藏
+        unreadCount.put("commentFollow", systemMessageService.getUnreadCountByTypes(userId, Arrays.asList(MessageConstant.SYSTEM_MESSAGE_TYPE_COMMENT, MessageConstant.SYSTEM_MESSAGE_TYPE_FOLLOW))); // 评论和关注
+
         return ResultUtils.success(unreadCount);
+    }
+
+    /**
+     * 批量标记指定类型列表的消息为已读
+     *
+     * @param types 消息类型列表
+     * @param request HTTP请求
+     * @return 标记成功的数量
+     */
+    @PostMapping("/mark-types-read")
+    @ApiOperation(value = "批量标记指定类型消息为已读", notes = "将指定类型列表的所有未读消息标记为已读")
+    public BaseResponse<Integer> markTypeAsRead(@RequestBody @ApiParam(value = "消息类型列表", required = true) List<Integer> types, HttpServletRequest request) {
+        if (types == null || types.isEmpty()) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "消息类型列表不能为空");
+        }
+
+        User loginUser = userService.getLoginUser(request);
+        int count = systemMessageService.markAllAsReadByTypes(loginUser.getId(), types);
+
+        return ResultUtils.success(count);
     }
 
     /**
@@ -277,7 +298,52 @@ public class SystemMessageController {
         ThrowUtils.throwIf(content == null || content.trim().isEmpty(), ErrorCode.PARAMS_ERROR, "内容不能为空");
         
         boolean result = systemMessageService.sendSystemNotification(title, content, toUserId);
-        
+
         return ResultUtils.success(result);
+    }
+
+    /**
+     * 批量标记系统通知为已读
+     *
+     * @param request HTTP请求
+     * @return 标记成功的数量
+     */
+    @PostMapping("/mark-system-read")
+    @ApiOperation(value = "批量标记系统通知为已读", notes = "将所有系统通知未读消息标记为已读")
+    public BaseResponse<Integer> markSystemAsRead(HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        int count = systemMessageService.markAllAsRead(loginUser.getId(), MessageConstant.SYSTEM_MESSAGE_TYPE_SYSTEM);
+
+        return ResultUtils.success(count);
+    }
+
+    /**
+     * 批量标记点赞和收藏消息为已读
+     *
+     * @param request HTTP请求
+     * @return 标记成功的数量
+     */
+    @PostMapping("/mark-like-favour-read")
+    @ApiOperation(value = "批量标记点赞和收藏消息为已读", notes = "将所有点赞和收藏未读消息标记为已读")
+    public BaseResponse<Integer> markLikeFavourAsRead(HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        int count = systemMessageService.markAllAsReadByTypes(loginUser.getId(), Arrays.asList(MessageConstant.SYSTEM_MESSAGE_TYPE_THUMB, MessageConstant.SYSTEM_MESSAGE_TYPE_FAVOUR));
+
+        return ResultUtils.success(count);
+    }
+
+    /**
+     * 批量标记评论和关注消息为已读
+     *
+     * @param request HTTP请求
+     * @return 标记成功的数量
+     */
+    @PostMapping("/mark-comment-follow-read")
+    @ApiOperation(value = "批量标记评论和关注消息为已读", notes = "将所有评论和关注未读消息标记为已读")
+    public BaseResponse<Integer> markCommentFollowAsRead(HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        int count = systemMessageService.markAllAsReadByTypes(loginUser.getId(), Arrays.asList(MessageConstant.SYSTEM_MESSAGE_TYPE_COMMENT, MessageConstant.SYSTEM_MESSAGE_TYPE_FOLLOW));
+
+        return ResultUtils.success(count);
     }
 }

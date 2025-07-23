@@ -8,6 +8,7 @@ import com.caden.campcircle.model.entity.SystemMessage;
 import com.caden.campcircle.model.vo.SystemMessageVO;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * 系统消息服务
@@ -125,4 +126,22 @@ public interface SystemMessageService extends IService<SystemMessage> {
      * @return 未读消息数量
      */
     long getUnreadCount(Long userId, Integer type);
+
+    /**
+     * 获取用户指定类型列表的未读消息数量
+     *
+     * @param userId 用户ID
+     * @param types 消息类型列表
+     * @return 未读消息数量
+     */
+    long getUnreadCountByTypes(Long userId, List<Integer> types);
+
+    /**
+     * 批量标记指定类型列表的消息为已读
+     *
+     * @param userId 用户ID
+     * @param types 消息类型列表
+     * @return 标记成功的数量
+     */
+    int markAllAsReadByTypes(Long userId, List<Integer> types);
 }

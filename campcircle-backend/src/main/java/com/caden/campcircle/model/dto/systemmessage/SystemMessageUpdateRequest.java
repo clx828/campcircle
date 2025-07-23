@@ -31,7 +31,7 @@ public class SystemMessageUpdateRequest implements Serializable {
     private Integer type;
 
     /**
-     * 状态：0-未读，1-已读
+     * 状态：1-未读，0-已读
      */
     private Integer status;
 

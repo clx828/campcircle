@@ -14,7 +14,6 @@ import com.caden.campcircle.model.vo.UserStatisticsVO;
 import com.caden.campcircle.model.vo.FollowVO;
 import com.caden.campcircle.model.vo.PostVO;
 import com.caden.campcircle.service.*;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +28,6 @@ import java.util.stream.Collectors;
  *
  */
 @Service
-@Slf4j
 public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> implements FollowService {
 
     @Resource
@@ -99,7 +97,6 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
                 // 发送关注通知
                 try {
                     systemMessageService.sendFollowNotification(userId, followUserId);
-                    log.info("发送关注通知成功: {}", userId);
                 } catch (Exception e) {
                     log.error("发送关注通知失败", e);
                 }

@@ -49,22 +49,25 @@ export interface SystemMessageUpdateParams {
 export interface SystemMessageQueryParams {
   /* 当前页码 */
   current?: number;
-  
+
   /* 页面大小 */
   pageSize?: number;
-  
+
   /* 消息类型 */
   type?: number;
-  
+
+  /* 消息类型列表 */
+  types?: number[];
+
   /* 接收用户ID */
   toUserId?: number;
-  
+
   /* 消息状态 0-未读 1-已读 */
   status?: number;
-  
+
   /* 排序字段 */
   sortField?: string;
-  
+
   /* 排序顺序 */
   sortOrder?: string;
 }
@@ -79,34 +82,52 @@ export interface DeleteParams {
 export interface SystemMessageVO {
   /* 消息ID */
   id: number;
-  
+
   /* 消息标题 */
   title: string;
-  
+
   /* 消息内容 */
   content: string;
-  
+
   /* 消息类型 */
   type: number;
-  
+
+  /* 消息类型描述 */
+  typeDesc: string;
+
   /* 发送用户ID */
   fromUserId: number;
-  
+
   /* 接收用户ID */
   toUserId: number;
-  
+
   /* 消息状态 0-未读 1-已读 */
   status: number;
-  
+
+  /* 状态描述 */
+  statusDesc: string;
+
   /* 关联的帖子ID */
   postId?: number;
-  
+
   /* 关联的评论ID */
   commentId?: number;
-  
+
+  /* 是否为全局消息 */
+  isGlobal?: number;
+
+  /* 发送用户信息 */
+  fromUser?: any;
+
+  /* 接收用户信息 */
+  toUser?: any;
+
+  /* 关联的帖子信息 */
+  post?: any;
+
   /* 创建时间 */
   createTime: Record<string, unknown>;
-  
+
   /* 更新时间 */
   updateTime: Record<string, unknown>;
 }
@@ -152,28 +173,22 @@ export interface SystemMessagePageRes {
 export interface UnreadCountRes {
   /* 响应码 */
   code: number;
-  
+
   /* 响应数据 */
   data: {
     /* 总未读数量 */
-    total: number;
-    
+    total: string;
+
     /* 系统通知未读数量 */
-    system: number;
-    
-    /* 点赞通知未读数量 */
-    thumb: number;
-    
-    /* 收藏通知未读数量 */
-    favour: number;
-    
-    /* 评论通知未读数量 */
-    comment: number;
-    
-    /* 关注通知未读数量 */
-    follow: number;
+    system: string;
+
+    /* 点赞和收藏未读数量 */
+    likeFavour: string;
+
+    /* 评论和关注未读数量 */
+    commentFollow: string;
   };
-  
+
   /* 响应消息 */
   message: string;
 }
@@ -227,5 +242,4 @@ export const systemMessageApi = {
     return request.get('/system-message/unread-count');
   },
 
-  
 }
